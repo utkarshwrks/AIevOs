@@ -1,271 +1,65 @@
-// ─── AiEVOS Shared UI Components ───
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
-const s = {
-  // Reusable inline style helpers
+export function DataNumber({ value, unit, large = false, color = 'var(--accent-cyan)' }) {
+  const numeric = typeof value === 'number' ? value : parseFloat(value)
+  const [display, setDisplay] = useState(Number.isFinite(numeric) ? numeric : 0)
+
+  useEffect(() => {
+    if (!Number.isFinite(numeric)) return
+    const start = display
+    const delta = numeric - start
+    let frame
+    const begin = performance.now()
+    const animate = now => {
+      const p = Math.min(1, (now - begin) / 450)
+      setDisplay(start + delta * (1 - Math.pow(1 - p, 3)))
+      if (p < 1) frame = requestAnimationFrame(animate)
+    }
+    frame = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frame)
+  }, [numeric])
+
+  const txt = Number.isFinite(numeric) ? Math.round(display * 100) / 100 : value
+  return <span className='cy-data' style={{ fontSize: large ? 48 : 28, color }}>{txt}{unit && <span style={{ fontSize: large ? 16 : 12, color: 'var(--text-secondary)', marginLeft: 4 }}>{unit}</span>}</span>
 }
 
-export function Card({ children, style = {} }) {
-  return (
-    <div style={{
-      background: 'var(--bg2)',
-      border: '1px solid var(--border)',
-      borderRadius: 8,
-      padding: 14,
-      ...style,
-    }}>
-      {children}
-    </div>
-  )
+export function Card({ children, style = {} }) { return <div className='cy-panel' style={style}>{children}</div> }
+export function CardTitle({ children }) { return <div className='cy-title'>{children}</div> }
+
+export function MetricCard({ label, value, sub, color = 'var(--accent-cyan)', barPct }) {
+  return <Card><CardTitle>{label}</CardTitle><div><DataNumber value={typeof value === 'string' ? Number(value) || value : value} color={color} /></div>{sub && <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{sub}</div>}{barPct !== undefined && <ProgressBar value={barPct} />}</Card>
 }
 
-export function CardTitle({ children }) {
-  return (
-    <div style={{
-      fontFamily: 'var(--mono)',
-      fontSize: 11,
-      letterSpacing: 2,
-      textTransform: 'uppercase',
-      color: 'var(--text3)',
-      marginBottom: 10,
-    }}>
-      {children}
-    </div>
-  )
-}
-
-export function MetricCard({ label, value, sub, color = '#fff', barColor, barPct }) {
-  return (
-    <Card>
-      <CardTitle>{label}</CardTitle>
-      <div style={{ fontSize: 28, fontWeight: 600, color, lineHeight: 1 }}>{value}</div>
-      {sub && (
-        <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>
-          {sub}
-        </div>
-      )}
-      {barPct !== undefined && (
-        <div style={{ height: 4, background: 'var(--bg4)', borderRadius: 2, overflow: 'hidden', marginTop: 8 }}>
-          <div style={{ height: '100%', width: `${barPct}%`, background: barColor || color, borderRadius: 2, transition: 'width .3s' }} />
-        </div>
-      )}
-    </Card>
-  )
-}
-
-export function SectionTitle({ children }) {
-  return (
-    <div style={{
-      fontFamily: 'var(--mono)',
-      fontSize: 13,
-      letterSpacing: 2,
-      textTransform: 'uppercase',
-      color: 'var(--text2)',
-      marginBottom: 12,
-      paddingBottom: 8,
-      borderBottom: '1px solid var(--border)',
-    }}>
-      {children}
-    </div>
-  )
-}
+export function SectionTitle({ children }) { return <h3 style={{ fontFamily: 'Orbitron', fontSize: 16, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 10 }}>{children}</h3> }
 
 export function StatusPill({ children, type = 'green' }) {
-  const map = {
-    green:  { bg: 'var(--green3)',  color: 'var(--green)',  border: 'var(--green2)' },
-    amber:  { bg: 'var(--amber3)',  color: 'var(--amber)',  border: 'var(--amber2)' },
-    red:    { bg: 'var(--red3)',    color: 'var(--red)',    border: 'var(--red2)'   },
-    blue:   { bg: 'var(--blue3)',   color: 'var(--blue)',   border: 'var(--blue2)'  },
-  }
-  const t = map[type] || map.green
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 6,
-      padding: '4px 10px', borderRadius: 20,
-      fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: 1,
-      background: t.bg, color: t.color, border: `1px solid ${t.border}`,
-    }}>
-      <PulseDot color={t.color} />
-      {children}
-    </div>
-  )
+  const map = { green: 'var(--accent-green)', amber: 'var(--accent-amber)', red: 'var(--accent-red)', blue: 'var(--accent-cyan)' }
+  const c = map[type] || map.green
+  return <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: `1px solid ${c}`, color: c, background: 'rgba(0,0,0,.2)', padding: '3px 8px', fontFamily: 'JetBrains Mono', fontSize: 10, letterSpacing: '.08em' }}><span className='status-ring' style={{ color: c }} />{children}</div>
 }
 
-export function PulseDot({ color = 'var(--green)', size = 6 }) {
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: color,
-      animation: 'pulse 1.5s ease infinite',
-    }} />
-  )
+export function LiveDot() { return <span className='status-ring' style={{ color: 'var(--accent-green)' }} /> }
+
+export function Grid({ cols = 4, gap = 10, children, style = {} }) {
+  return <div className='cy-grid' style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`, gap, ...style }}>{children}</div>
 }
 
-export function LiveDot() {
-  return (
-    <div style={{
-      width: 8, height: 8, borderRadius: '50%',
-      background: 'var(--green)',
-      animation: 'livePulse 2s ease infinite',
-    }} />
-  )
-}
-
-export function Grid({ cols = 4, gap = 12, children, style = {} }) {
-  return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: `repeat(${cols}, 1fr)`,
-      gap,
-      marginBottom: gap,
-      ...style,
-    }}>
-      {children}
-    </div>
-  )
+export function ProgressBar({ value }) {
+  return <div className='cy-progress' style={{ marginTop: 8 }}><span style={{ width: `${Math.max(0, Math.min(100, value))}%` }} /></div>
 }
 
 export function AlertRow({ sev, vehicle, module: mod, msg, detail, time }) {
-  const map = {
-    critical: { cls: { background: 'var(--red3)',    color: 'var(--red)',   border: '1px solid var(--red2)'   }, icon: '!' },
-    warning:  { cls: { background: 'var(--amber3)',  color: 'var(--amber)', border: '1px solid var(--amber2)' }, icon: '⚠' },
-    info:     { cls: { background: 'var(--blue3)',   color: 'var(--blue)',  border: '1px solid var(--blue2)'  }, icon: 'i' },
-  }
-  const t = map[sev] || map.info
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 10,
-      padding: '8px 12px', borderRadius: 6, marginBottom: 6,
-      background: 'var(--bg3)', border: '1px solid var(--border)',
-    }}>
-      <div style={{
-        width: 20, height: 20, borderRadius: 4, flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'var(--mono)', fontSize: 11,
-        ...t.cls,
-      }}>
-        {t.icon}
-      </div>
-      <div>
-        <div style={{ color: '#fff', fontSize: 12 }}>{msg}</div>
-        <div style={{ fontSize: 11, color: 'var(--text3)' }}>{vehicle} · {mod} · {detail}</div>
-      </div>
-      <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text3)', marginLeft: 'auto', whiteSpace: 'nowrap' }}>
-        {time}
-      </div>
-    </div>
-  )
+  const map = { critical: 'var(--accent-red)', warning: 'var(--accent-amber)', info: 'var(--accent-cyan)' }
+  const c = map[sev] || map.info
+  return <div style={{ display: 'grid', gridTemplateColumns: '4px 1fr auto', gap: 10, alignItems: 'center', marginBottom: 6, background: 'rgba(255,255,255,.01)', border: '1px solid var(--border-dim)', animation: 'pageIn .3s ease' }}><div style={{ background: c, height: '100%' }} /><div style={{ padding: '8px 0' }}><div style={{ color: c, fontSize: 13 }}>{msg}</div><div style={{ color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono', fontSize: 10 }}>{vehicle} · {mod} · {detail}</div></div><div style={{ paddingRight: 8, color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono', fontSize: 10 }}>{time}</div></div>
 }
 
 export function TabBar({ tabs, active, onChange }) {
-  return (
-    <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: '1px solid var(--border)' }}>
-      {tabs.map(tab => (
-        <button
-          key={tab.id}
-          onClick={() => onChange(tab.id)}
-          style={{
-            padding: '8px 16px',
-            background: 'none',
-            border: 'none',
-            borderBottom: `2px solid ${active === tab.id ? 'var(--green)' : 'transparent'}`,
-            fontFamily: 'var(--mono)',
-            fontSize: 12,
-            letterSpacing: 1,
-            textTransform: 'uppercase',
-            color: active === tab.id ? 'var(--green)' : 'var(--text3)',
-            cursor: 'pointer',
-            transition: 'all .15s',
-          }}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
-  )
+  return <div style={{ display: 'grid', gridAutoFlow: 'column', gap: 6, marginBottom: 10 }}>{tabs.map(tab => <button className='cy-btn' key={tab.id} onClick={() => onChange(tab.id)} style={{ background: active === tab.id ? 'var(--accent-cyan)' : 'transparent', color: active === tab.id ? 'var(--bg-void)' : 'var(--accent-cyan)' }}>{tab.label}</button>)}</div>
 }
 
-export function SchemaBlock({ table }) {
-  return (
-    <div style={{
-      background: 'var(--bg3)', border: '1px solid var(--border)',
-      borderRadius: 6, padding: 12, marginBottom: 8,
-      fontFamily: 'var(--mono)', fontSize: 11,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <span style={{ color: 'var(--teal)', fontSize: 12, fontWeight: 600 }}>{table.name}</span>
-        {table.badge && (
-          <span style={{ color: 'var(--teal)', fontSize: 9, padding: '1px 4px', borderRadius: 3, background: 'var(--teal3)', border: '1px solid var(--teal2)' }}>
-            {table.badge}
-          </span>
-        )}
-      </div>
-      {table.fields.map((f, i) => (
-        <div key={i} style={{ display: 'flex', gap: 8, padding: '2px 0', color: 'var(--text2)' }}>
-          <span style={{ color: 'var(--purple)', minWidth: 90 }}>{f.type}</span>
-          <span>{f.name}</span>
-          {f.key && (
-            <span style={{ color: 'var(--amber)', fontSize: 9, padding: '1px 4px', borderRadius: 3, background: 'var(--amber3)', border: '1px solid var(--amber2)', marginLeft: 4 }}>
-              {f.key}
-            </span>
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}
+export function SchemaBlock({ table }) { return <Card style={{ marginBottom: 8 }}><CardTitle>{table.name}</CardTitle>{table.fields.map((f, i) => <div key={i} style={{ display: 'grid', gridTemplateColumns: '90px 1fr auto', color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono', fontSize: 10 }}><span style={{ color: 'var(--accent-purple)' }}>{f.type}</span><span>{f.name}</span><span>{f.key || ''}</span></div>)}</Card> }
 
-export function ArchLayer({ layer }) {
-  const colorMap = {
-    teal:   { bg: 'var(--teal3)',   color: 'var(--teal)',   border: 'var(--teal2)'   },
-    purple: { bg: 'var(--purple3)', color: 'var(--purple)', border: 'var(--purple2)' },
-    amber:  { bg: 'var(--amber3)',  color: 'var(--amber)',  border: 'var(--amber2)'  },
-    blue:   { bg: 'var(--blue3)',   color: 'var(--blue)',   border: 'var(--blue2)'   },
-    red:    { bg: 'var(--red3)',    color: 'var(--red)',    border: 'var(--red2)'    },
-    green:  { bg: 'var(--green3)', color: 'var(--green)',  border: 'var(--green2)'  },
-    gray:   { bg: 'var(--bg4)',    color: 'var(--text2)',  border: 'var(--border2)' },
-  }
-  const t = colorMap[layer.color] || colorMap.gray
-  return (
-    <div style={{
-      background: 'var(--bg3)', border: '1px solid var(--border)',
-      borderRadius: 8, padding: '12px 16px', marginBottom: 6,
-      display: 'flex', alignItems: 'center', gap: 16,
-    }}>
-      <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text3)', minWidth: 80 }}>
-        {layer.label}
-      </div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {layer.items.map(item => (
-          <span key={item} style={{
-            padding: '4px 10px', borderRadius: 4,
-            fontSize: 12, fontFamily: 'var(--mono)', fontWeight: 600,
-            background: t.bg, color: t.color, border: `1px solid ${t.border}`,
-          }}>
-            {item}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
+export function ArchLayer({ layer }) { return <Card style={{ marginBottom: 8 }}><CardTitle>{layer.label}</CardTitle><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{layer.items.map(item => <span key={item} style={{ border: '1px solid var(--border-dim)', padding: '4px 8px', fontFamily: 'JetBrains Mono', fontSize: 11 }}>{item}</span>)}</div></Card> }
 
-export function ApiEndpoint({ method, path, desc }) {
-  const methodColor = {
-    GET:  'var(--green)',
-    POST: 'var(--blue)',
-    WS:   'var(--teal)',
-  }
-  return (
-    <div style={{
-      background: 'var(--bg3)', border: '1px solid var(--border)',
-      borderRadius: 6, padding: '10px 14px', marginBottom: 8,
-      display: 'flex', alignItems: 'center', gap: 12,
-      fontFamily: 'var(--mono)', fontSize: 12,
-    }}>
-      <span style={{ color: methodColor[method] || 'var(--text)', minWidth: 40 }}>{method}</span>
-      <span style={{ color: '#fff' }}>{path}</span>
-      <span style={{ color: 'var(--text3)', marginLeft: 'auto', fontSize: 10 }}>{desc}</span>
-    </div>
-  )
-}
+export function ApiEndpoint({ method, path, desc }) { return <div style={{ display: 'grid', gridTemplateColumns: '50px 1fr auto', gap: 10, borderBottom: '1px solid var(--border-dim)', padding: '6px 0', fontFamily: 'JetBrains Mono', fontSize: 11 }}><span style={{ color: 'var(--accent-cyan)' }}>{method}</span><span>{path}</span><span style={{ color: 'var(--text-secondary)' }}>{desc}</span></div> }

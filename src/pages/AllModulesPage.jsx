@@ -1,42 +1,25 @@
-import React from 'react'
-import { MODULES } from '../data/mockData'
+import React, { useState } from 'react'
+import { VEHICLES } from '../data/mockData'
+import { FleetGlobe3D } from '../components/ThreeVisuals'
+import { Card, ProgressBar } from '../components/UI'
 
-export default function AllModulesPage({ onNavigate }) {
-  const navMap = { cybolion: 'cybomain', cybodrive: 'cybodrive' }
-
+export default function AllModulesPage() {
+  const [expanded, setExpanded] = useState(null)
   return (
-    <div style={{
-      display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-      gap: 12, animation: 'fadeIn .3s ease',
-    }}>
-      {MODULES.map(m => (
-        <div
-          key={m.key}
-          onClick={() => navMap[m.key] && onNavigate(navMap[m.key])}
-          style={{
-            background: 'var(--bg2)', border: '1px solid var(--border)',
-            borderRadius: 8, padding: 16, cursor: 'pointer',
-            transition: 'all .2s', position: 'relative', overflow: 'hidden',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)' }}
-        >
-          {/* Top accent line */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: m.color, borderRadius: '8px 8px 0 0' }} />
-
-          <div style={{ fontSize: 24, marginBottom: 8 }}>{m.icon}</div>
-          <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: 1, color: '#fff', marginBottom: 4 }}>{m.name}</div>
-          <div style={{ fontSize: 11, color: 'var(--text2)', lineHeight: 1.5, marginBottom: 10 }}>{m.desc}</div>
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text3)',
-            paddingTop: 8, borderTop: '1px solid var(--border)',
-          }}>
-            <span>{m.stat}</span>
-            <span style={{ color: m.statusColor }}>{m.status}</span>
-          </div>
+    <div className='cy-grid' style={{ gridTemplateColumns: '2fr 3fr' }}>
+      <FleetGlobe3D vehicles={VEHICLES} />
+      <Card>
+        <div className='cy-title'>Fleet Vehicles</div>
+        <div style={{ display: 'grid', gap: 6 }}>
+          {VEHICLES.map(v => {
+            const c = v.health > 85 ? 'var(--accent-green)' : v.health > 70 ? 'var(--accent-amber)' : 'var(--accent-red)'
+            return <div key={v.id} style={{ border: '1px solid var(--border-dim)', padding: 8, cursor: 'pointer' }} onClick={() => setExpanded(expanded === v.id ? null : v.id)}>
+              <div style={{ display: 'grid', gridTemplateColumns: '80px 70px 1fr 1fr 80px', gap: 8, alignItems: 'center', fontFamily: 'JetBrains Mono', fontSize: 11 }}><span>{v.id}</span><span style={{ color: c }}>{v.status}</span><ProgressBar value={v.soc} /><span>{v.model}</span><span>{Math.floor(Math.random() * 60)}s</span></div>
+              {expanded === v.id && <div style={{ marginTop: 8, color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono', fontSize: 10 }}>Health {v.health}% · Location Sector-{(v.id.slice(-2))} · Last ping now</div>}
+            </div>
+          })}
         </div>
-      ))}
+      </Card>
     </div>
   )
 }

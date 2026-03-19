@@ -1,102 +1,55 @@
 import React from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { Card, CardTitle, Grid, StatusPill } from '../components/UI'
+import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Card, CardTitle, DataNumber, Grid, ProgressBar, AlertRow } from '../components/UI'
+import { ALERTS } from '../data/mockData'
 import { useLiveTelemetry } from '../hooks/useLiveTelemetry'
 
-const RPM_TORQUE = Array.from({ length: 20 }, (_, i) => ({
-  t: `${i * 3}:00`,
-  rpm: Math.round(50 + Math.random() * 30) * 100,
-  torque: Math.round(140 + Math.random() * 60),
-}))
-
-const MOTOR_TEMP_24 = Array.from({ length: 24 }, (_, i) => ({
-  hour: `${i}:00`,
-  temp: Math.round(62 + Math.random() * 20),
-}))
-
-const TT = {
-  contentStyle: { background: '#0f1318', border: '1px solid #1e2a38', borderRadius: 6, fontFamily: 'var(--mono)', fontSize: 11 }
-}
+const RPM_TORQUE = Array.from({ length: 20 }, (_, i) => ({ t: `${i * 3}:00`, rpm: Math.round(50 + Math.random() * 30) * 100, torque: Math.round(140 + Math.random() * 60) }))
+const EFF = Array.from({ length: 24 }, (_, i) => ({ x: i, efficiency: 83 + Math.random() * 10 }))
+const TT = { contentStyle: { background: 'var(--bg-elevated)', border: '1px solid var(--accent-cyan)', color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: 10 } }
 
 export default function CyboDrivePage() {
   const t = useLiveTelemetry(2000)
-
-  const rpm    = Math.round(t.rpm)
-  const torque = Math.round(t.torque)
-  const temp   = Math.round(t.motorTemp)
-  const eff    = Math.round(88 + Math.random() * 5)
-
   return (
-    <div style={{ animation: 'fadeIn .3s ease' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <div style={{
-          width: 40, height: 40, borderRadius: 8,
-          background: 'var(--blue3)', border: '1px solid var(--blue2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 20,
-        }}>⚡</div>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: 1, color: '#fff' }}>CyboDrive</div>
-          <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)' }}>MOTOR MONITORING MODULE</div>
-        </div>
-        <div style={{ marginLeft: 'auto' }}><StatusPill type="amber">1 ALERT ACTIVE</StatusPill></div>
-      </div>
-
-      {/* KPIs */}
-      <Grid cols={4}>
-        <Card>
-          <CardTitle>Motor RPM</CardTitle>
-          <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--blue)' }}>{rpm}</div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>CURRENT RPM</div>
-        </Card>
-        <Card>
-          <CardTitle>Torque</CardTitle>
-          <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--green)' }}>{torque}</div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>N·m</div>
-        </Card>
-        <Card>
-          <CardTitle>Motor Temp</CardTitle>
-          <div style={{ fontSize: 28, fontWeight: 600, color: temp > 85 ? 'var(--red)' : 'var(--amber)' }}>{temp}°C</div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>OPERATING TEMP</div>
-        </Card>
-        <Card>
-          <CardTitle>Efficiency</CardTitle>
-          <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--teal)' }}>{eff}%</div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>DRIVE EFFICIENCY</div>
-        </Card>
-      </Grid>
-
-      {/* Charts */}
+    <div className='cy-grid'>
       <Grid cols={2}>
         <Card>
-          <CardTitle>RPM vs Torque (Live)</CardTitle>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={RPM_TORQUE} margin={{ top: 4, right: 4, bottom: 4, left: -10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e2a38" />
-              <XAxis dataKey="t" tick={{ fill: '#4a5a6a', fontSize: 9 }} interval={3} />
-              <YAxis tick={{ fill: '#4a5a6a', fontSize: 9 }} />
-              <Tooltip {...TT} />
-              <Line type="monotone" dataKey="rpm"    stroke="#4090ff" strokeWidth={2} dot={false} name="RPM" />
-              <Line type="monotone" dataKey="torque" stroke="#00e896" strokeWidth={2} dot={false} name="Torque N·m" />
-              <Legend wrapperStyle={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text2)' }} />
-            </LineChart>
-          </ResponsiveContainer>
+          <CardTitle>Motor Schematic</CardTitle>
+          <svg viewBox='0 0 500 200' style={{ width: '100%', height: 200 }}>
+            <circle cx='160' cy='100' r='64' fill='none' stroke='#00d4ff' strokeWidth='2' />
+            <circle cx='160' cy='100' r='22' fill='#0f1f2e' stroke='#00d4ff' />
+            <line x1='160' y1='40' x2='160' y2='160' stroke='#00d4ff'><animateTransform attributeName='transform' type='rotate' from='0 160 100' to='360 160 100' dur='2s' repeatCount='indefinite' /></line>
+            <rect x='250' y='72' width='140' height='56' fill='#0a1520' stroke='#00d4ff' />
+            <text x='262' y='105' fill='#5a7a8a' fontSize='12'>INVERTER BUS</text>
+          </svg>
         </Card>
-
         <Card>
-          <CardTitle>Motor Temp Trend</CardTitle>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={MOTOR_TEMP_24} margin={{ top: 4, right: 4, bottom: 4, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e2a38" />
-              <XAxis dataKey="hour" tick={{ fill: '#4a5a6a', fontSize: 9 }} interval={3} />
-              <YAxis tick={{ fill: '#4a5a6a', fontSize: 9 }} />
-              <Tooltip {...TT} />
-              <Line type="monotone" dataKey="temp" stroke="#ff4560" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
+          <CardTitle>Drive Metrics</CardTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div><div style={{ color: 'var(--text-secondary)' }}>RPM</div><DataNumber value={Math.round(t.rpm)} /></div>
+            <div><div style={{ color: 'var(--text-secondary)' }}>Torque</div><DataNumber value={Math.round(t.torque)} unit='N·m' color='var(--accent-green)' /></div>
+            <div><div style={{ color: 'var(--text-secondary)' }}>Temp</div><DataNumber value={Math.round(t.motorTemp)} unit='°C' color='var(--accent-amber)' /></div>
+            <div><div style={{ color: 'var(--text-secondary)' }}>Efficiency</div><DataNumber value={91} unit='%' color='var(--accent-cyan)' /></div>
+          </div>
+          <ProgressBar value={Math.min(100, Math.round((t.rpm / 12000) * 100))} />
         </Card>
       </Grid>
+
+      <Grid cols={2}>
+        <Card>
+          <CardTitle>RPM vs Torque</CardTitle>
+          <ResponsiveContainer width='100%' height={200}><LineChart data={RPM_TORQUE}><CartesianGrid stroke='var(--border-dim)' strokeDasharray='3 3' /><XAxis dataKey='t' tick={{ fill: '#5a7a8a', fontSize: 9 }} interval={3} /><YAxis tick={{ fill: '#5a7a8a', fontSize: 9 }} /><Tooltip {...TT} /><Line dataKey='rpm' stroke='var(--accent-cyan)' dot={false} strokeWidth={2} /><Line dataKey='torque' stroke='var(--accent-green)' dot={false} strokeWidth={2} /></LineChart></ResponsiveContainer>
+        </Card>
+        <Card>
+          <CardTitle>Motor Efficiency Trend</CardTitle>
+          <ResponsiveContainer width='100%' height={200}><AreaChart data={EFF}><defs><linearGradient id='eff' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stopColor='#00d4ff' stopOpacity='.24' /><stop offset='100%' stopColor='#00d4ff' stopOpacity='0' /></linearGradient></defs><CartesianGrid stroke='var(--border-dim)' strokeDasharray='3 3' /><XAxis dataKey='x' tick={{ fill: '#5a7a8a', fontSize: 9 }} /><YAxis tick={{ fill: '#5a7a8a', fontSize: 9 }} /><Tooltip {...TT} /><Area dataKey='efficiency' stroke='var(--accent-cyan)' fill='url(#eff)' dot={false} strokeWidth={2} /></AreaChart></ResponsiveContainer>
+        </Card>
+      </Grid>
+
+      <Card>
+        <CardTitle>Inline Alerts</CardTitle>
+        {ALERTS.filter(a => a.module === 'CyboDrive').map(a => <AlertRow key={a.id} {...a} />)}
+      </Card>
     </div>
   )
 }
