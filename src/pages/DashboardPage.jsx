@@ -1,123 +1,60 @@
 import React from 'react'
-import {
-  BarChart, Bar, LineChart, Line,
-  PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer,
-} from 'recharts'
-import { MetricCard, Card, CardTitle, AlertRow, Grid } from '../components/UI'
-import { VEHICLES, ALERTS } from '../data/mockData'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Card, CardTitle, DataNumber, AlertRow, ProgressBar } from '../components/UI'
+import { ALERTS, VEHICLES } from '../data/mockData'
+import { VehicleOverview3D } from '../components/ThreeVisuals'
 
-const CHARGING_DATA = [
-  { name: 'Active',   value: 7, color: '#00e896' },
-  { name: 'Charging', value: 2, color: '#4090ff' },
-  { name: 'Warning',  value: 3, color: '#f0a020' },
-]
-
-const MOTOR_TEMP_DATA = Array.from({ length: 24 }, (_, i) => ({
-  hour: `${i}:00`,
-  temp: Math.round(60 + Math.random() * 25),
-}))
+const MOTOR_TEMP_DATA = Array.from({ length: 24 }, (_, i) => ({ hour: `${i}:00`, temp: Math.round(60 + Math.random() * 25) }))
+const TT = { contentStyle: { background: 'var(--bg-elevated)', border: '1px solid var(--accent-cyan)', color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: 10 } }
 
 export default function DashboardPage() {
+  const stats = [
+    ['Total Vehicles', 12],
+    ['Active Alerts', 3],
+    ['Avg Battery Health', '87%'],
+    ['Active Charging', 2],
+  ]
+
   return (
-    <div style={{ animation: 'fadeIn .3s ease' }}>
-      <Grid cols={4}>
-        <MetricCard
-          label="Total Vehicles"
-          value="12"
-          sub="FLEET SIZE"
-          barColor="var(--blue)"
-          barPct={100}
-        />
-        <MetricCard
-          label="Fleet Health Score"
-          value={<>87<span style={{ fontSize: 16, color: 'var(--text3)' }}>%</span></>}
-          sub="AVG HEALTH INDEX"
-          color="var(--green)"
-          barColor="var(--green)"
-          barPct={87}
-        />
-        <MetricCard
-          label="Active Alerts"
-          value="3"
-          sub={<><span style={{ color: 'var(--red)' }}>1 CRITICAL</span> · 2 WARNING</>}
-          color="var(--red)"
-          barColor="var(--red)"
-          barPct={25}
-        />
-        <MetricCard
-          label="Avg Battery SoC"
-          value={<>72<span style={{ fontSize: 16, color: 'var(--text3)' }}>%</span></>}
-          sub={<><span style={{ color: 'var(--green)' }}>↑ 4%</span> SINCE YESTERDAY</>}
-          color="var(--amber)"
-          barColor="var(--amber)"
-          barPct={72}
-        />
-      </Grid>
+    <div className='cy-grid' style={{ gridTemplateColumns: 'repeat(12,minmax(0,1fr))' }}>
+      <div className='cy-panel' style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, alignItems: 'center' }}>
+        {stats.map(([k, v], i) => <div key={k} style={{ borderRight: i < 3 ? '1px solid var(--border-dim)' : 'none', paddingRight: 10 }}><div className='cy-title'>{k}</div><div className='cy-data' style={{ fontSize: 28 }}>{v}</div></div>)}
+      </div>
 
-      <Grid cols={2}>
-        <Card>
-          <CardTitle>Battery SoC Distribution</CardTitle>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={VEHICLES} margin={{ top: 4, right: 4, bottom: 4, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e2a38" />
-              <XAxis dataKey="id" tick={{ fill: '#4a5a6a', fontSize: 9 }} />
-              <YAxis tick={{ fill: '#4a5a6a', fontSize: 9 }} domain={[0, 100]} />
-              <Tooltip
-                contentStyle={{ background: '#0f1318', border: '1px solid #1e2a38', borderRadius: 6, fontFamily: 'var(--mono)', fontSize: 11 }}
-                labelStyle={{ color: '#c8d4e0' }}
-              />
-              <Bar dataKey="soc" radius={[4, 4, 0, 0]}>
-                {VEHICLES.map((v, i) => (
-                  <Cell key={i} fill={v.soc > 70 ? '#00e896' : v.soc > 40 ? '#f0a020' : '#ff4560'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
+      <div style={{ gridColumn: '1 / span 7' }}><VehicleOverview3D /></div>
+      <Card style={{ gridColumn: '8 / -1', maxHeight: 320, overflow: 'hidden' }}>
+        <CardTitle>Live Telemetry Feed</CardTitle>
+        <div style={{ display: 'grid', gap: 4, maxHeight: 270, overflow: 'auto', fontFamily: 'JetBrains Mono', fontSize: 10 }}>
+          {ALERTS.concat(ALERTS).map((a, idx) => <div key={idx} style={{ color: a.sev === 'critical' ? 'var(--accent-red)' : a.sev === 'warning' ? 'var(--accent-amber)' : 'var(--accent-cyan)', borderBottom: '1px solid var(--border-dim)', paddingBottom: 4 }}>[{new Date().toLocaleTimeString('en-US', { hour12: false })}] [{a.module.toUpperCase()}] {a.msg}</div>)}
+        </div>
+      </Card>
 
-        <Card>
-          <CardTitle>Motor Temp Trend (24h)</CardTitle>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={MOTOR_TEMP_DATA} margin={{ top: 4, right: 4, bottom: 4, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e2a38" />
-              <XAxis dataKey="hour" tick={{ fill: '#4a5a6a', fontSize: 9 }} interval={3} />
-              <YAxis tick={{ fill: '#4a5a6a', fontSize: 9 }} />
-              <Tooltip contentStyle={{ background: '#0f1318', border: '1px solid #1e2a38', borderRadius: 6, fontFamily: 'var(--mono)', fontSize: 11 }} />
-              <Line type="monotone" dataKey="temp" stroke="#4090ff" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-      </Grid>
+      <Card style={{ gridColumn: '1 / span 4' }}>
+        <CardTitle>Battery Status</CardTitle>
+        <DataNumber value={72} unit='%' large />
+        <ProgressBar value={72} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8,1fr)', gap: 2, marginTop: 10 }}>{Array.from({ length: 24 }).map((_, i) => <div key={i} style={{ aspectRatio: 1, background: i % 6 === 0 ? 'var(--accent-red)' : i % 4 === 0 ? 'var(--accent-amber)' : 'var(--accent-cyan)', opacity: .75 }} />)}</div>
+      </Card>
 
-      <Grid cols={2}>
-        <Card>
-          <CardTitle style={{ marginBottom: 12 }}>Recent Alerts</CardTitle>
-          {ALERTS.map(a => <AlertRow key={a.id} {...a} />)}
-        </Card>
+      <Card style={{ gridColumn: '5 / span 4' }}>
+        <CardTitle>Motor Metrics</CardTitle>
+        <div style={{ display: 'grid', gap: 8 }}>
+          <div>RPM <span className='cy-data'>6240</span></div>
+          <div>Torque <span className='cy-data'>182 N·m</span></div>
+          <div>Temp <span className='cy-data'>78°C</span></div>
+        </div>
+        <ResponsiveContainer width='100%' height={130}><AreaChart data={MOTOR_TEMP_DATA}><defs><linearGradient id='motorFill' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stopColor='#00d4ff' stopOpacity='.35' /><stop offset='100%' stopColor='#00d4ff' stopOpacity='0' /></linearGradient></defs><CartesianGrid stroke='var(--border-dim)' strokeDasharray='3 3' /><XAxis dataKey='hour' tick={{ fill: '#5a7a8a', fontSize: 9 }} interval={5} /><YAxis tick={{ fill: '#5a7a8a', fontSize: 9 }} /><Tooltip {...TT} /><Area type='monotone' dataKey='temp' stroke='var(--accent-cyan)' fill='url(#motorFill)' strokeWidth={2} dot={false} /></AreaChart></ResponsiveContainer>
+      </Card>
 
-        <Card>
-          <CardTitle>Charging Status</CardTitle>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie
-                data={CHARGING_DATA}
-                cx="50%" cy="50%"
-                innerRadius={55} outerRadius={80}
-                dataKey="value"
-              >
-                {CHARGING_DATA.map((d, i) => <Cell key={i} fill={d.color} />)}
-              </Pie>
-              <Tooltip contentStyle={{ background: '#0f1318', border: '1px solid #1e2a38', borderRadius: 6, fontFamily: 'var(--mono)', fontSize: 11 }} />
-              <Legend
-                wrapperStyle={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text2)' }}
-                iconType="square"
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </Card>
-      </Grid>
+      <Card style={{ gridColumn: '9 / -1' }}>
+        <CardTitle>Recent Alerts</CardTitle>
+        {ALERTS.slice(0, 3).map(a => <AlertRow key={a.id} {...a} />)}
+      </Card>
+
+      <Card style={{ gridColumn: '1 / -1' }}>
+        <CardTitle>Battery SoC Distribution</CardTitle>
+        <ResponsiveContainer width='100%' height={160}><BarChart data={VEHICLES}><CartesianGrid stroke='var(--border-dim)' strokeDasharray='3 3' /><XAxis dataKey='id' tick={{ fill: '#5a7a8a', fontSize: 9 }} /><YAxis domain={[0, 100]} tick={{ fill: '#5a7a8a', fontSize: 9 }} /><Tooltip {...TT} /><Bar dataKey='soc'>{VEHICLES.map((v, i) => <Cell key={i} fill={v.soc > 70 ? '#00ff9d' : v.soc > 40 ? '#ffb800' : '#ff2d55'} />)}</Bar></BarChart></ResponsiveContainer>
+      </Card>
     </div>
   )
 }

@@ -1,97 +1,37 @@
-import React from 'react'
-import { LiveDot } from './UI'
+import React, { useState } from 'react'
+import { BatteryCharging, Cable, Cpu, Frame, Gauge, Grid2x2, Scale, Settings2, Siren, CarFront } from 'lucide-react'
 
 const NAV = [
-  { id: 'dashboard',     label: 'Fleet Dashboard',  section: 'Core'    },
-  { id: 'vehicles',      label: 'Vehicles',          section: null      },
-  { id: 'telemetry',     label: 'Live Telemetry',    section: null      },
-  { id: 'alerts',        label: 'Alerts',            badge: '3',        section: null      },
-  { id: 'cybomain',      label: 'CyboLion 🔋',       section: 'Modules' },
-  { id: 'cybodrive',     label: 'CyboDrive ⚡',      section: null      },
-  { id: 'cybomodules',   label: 'All Modules',       section: null      },
-  { id: 'aimodels',      label: 'AI Models',         section: 'AI Engine'},
-  { id: 'architecture',  label: 'Architecture',      section: 'System'  },
-  { id: 'database',      label: 'Database Schema',   section: null      },
-  { id: 'api',           label: 'API Reference',     section: null      },
+  { id: 'dashboard', label: 'Dashboard', icon: Grid2x2 },
+  { id: 'vehicles', label: 'Vehicles', icon: CarFront },
+  { id: 'telemetry', label: 'Telemetry', icon: Gauge },
+  { id: 'alerts', label: 'Alerts', icon: Siren },
+  { id: 'cybomain', label: 'CyboLion', icon: BatteryCharging },
+  { id: 'cybodrive', label: 'CyboDrive', icon: Settings2 },
+  { id: 'cybomodules', label: 'CyboWire', icon: Cable },
+  { id: 'aimodels', label: 'CyboControl', icon: Cpu },
+  { id: 'architecture', label: 'CyboBalance', icon: Scale },
+  { id: 'database', label: 'CyboFrame', icon: Frame },
+  { id: 'api', label: 'API', icon: Cpu },
 ]
 
 export default function Sidebar({ active, onNavigate }) {
-  let lastSection = null
-
+  const [expanded, setExpanded] = useState(true)
   return (
-    <div style={{
-      width: 200, minWidth: 200,
-      background: 'var(--bg2)',
-      borderRight: '1px solid var(--border)',
-      display: 'flex', flexDirection: 'column',
-    }}>
-      {/* Logo */}
-      <div style={{ padding: '16px 14px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 18, color: '#fff', letterSpacing: 2 }}>
-          AiEVOS
-        </div>
-        <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text3)', letterSpacing: 1 }}>
-          AI EV OPERATING SYSTEM
-        </div>
-      </div>
+    <aside style={{ width: expanded ? 240 : 72, transition: 'width .35s cubic-bezier(.2,.9,.2,1)', borderRight: '1px solid var(--border-dim)', background: 'linear-gradient(180deg,#030912,#020408)', display: 'grid', gridTemplateRows: '72px 1fr 46px' }}>
+      <button onClick={() => setExpanded(v => !v)} style={{ background: 'transparent', border: 'none', color: 'var(--accent-cyan)', cursor: 'pointer', textAlign: 'left', padding: '14px 12px' }}>
+        <div style={{ fontFamily: 'Orbitron', fontSize: 20, textShadow: 'var(--glow-cyan)' }}>AiEVOS</div>
+      </button>
 
-      {/* Nav */}
-      <div style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
+      <nav style={{ overflowY: 'auto', padding: 6, display: 'grid', gap: 4 }}>
         {NAV.map(item => {
-          const showSection = item.section && item.section !== lastSection
-          if (showSection) lastSection = item.section
-
-          return (
-            <React.Fragment key={item.id}>
-              {showSection && (
-                <div style={{
-                  padding: '6px 14px 2px',
-                  fontFamily: 'var(--mono)', fontSize: 9,
-                  letterSpacing: 2, color: 'var(--text3)',
-                  textTransform: 'uppercase',
-                }}>
-                  {item.section}
-                </div>
-              )}
-              <div
-                onClick={() => onNavigate(item.id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '7px 14px', cursor: 'pointer',
-                  borderLeft: `2px solid ${active === item.id ? 'var(--green)' : 'transparent'}`,
-                  background: active === item.id ? 'var(--bg3)' : 'transparent',
-                  color: active === item.id ? 'var(--green)' : 'var(--text2)',
-                  fontSize: 13, fontWeight: 500,
-                  transition: 'all .15s',
-                }}
-                onMouseEnter={e => { if (active !== item.id) { e.currentTarget.style.background = 'var(--bg3)'; e.currentTarget.style.color = 'var(--text)' } }}
-                onMouseLeave={e => { if (active !== item.id) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text2)' } }}
-              >
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', flexShrink: 0 }} />
-                <span style={{ flex: 1 }}>{item.label}</span>
-                {item.badge && (
-                  <span style={{
-                    background: 'var(--red3)', color: 'var(--red)',
-                    border: '1px solid var(--red2)',
-                    fontSize: 9, padding: '1px 6px', borderRadius: 10,
-                    fontFamily: 'var(--mono)',
-                  }}>
-                    {item.badge}
-                  </span>
-                )}
-              </div>
-            </React.Fragment>
-          )
+          const Icon = item.icon
+          const isActive = item.id === active
+          return <button key={item.id} title={item.label} onClick={() => onNavigate(item.id)} style={{ display: 'grid', gridTemplateColumns: expanded ? '20px 1fr' : '1fr', gap: 10, alignItems: 'center', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '9px 8px', color: isActive ? 'var(--accent-cyan)' : 'var(--text-secondary)', background: isActive ? 'var(--bg-elevated)' : 'transparent', borderLeft: isActive ? '4px solid var(--accent-cyan)' : '4px solid transparent', boxShadow: isActive ? 'var(--glow-cyan)' : 'none' }}><Icon size={16} />{expanded && <span style={{ fontFamily: 'Rajdhani', letterSpacing: '.08em', textTransform: 'uppercase', fontSize: 12 }}>{item.label}</span>}</button>
         })}
-      </div>
+      </nav>
 
-      {/* Footer */}
-      <div style={{ padding: '12px 14px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <LiveDot />
-        <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text3)' }}>
-          LIVE · 12 VEHICLES
-        </span>
-      </div>
-    </div>
+      <div style={{ borderTop: '1px solid var(--border-dim)', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', color: 'var(--accent-green)', fontFamily: 'JetBrains Mono', fontSize: 10 }}><span className='status-ring' />{expanded && 'SYSTEM ACTIVE'}</div>
+    </aside>
   )
 }
