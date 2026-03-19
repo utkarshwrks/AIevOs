@@ -1,150 +1,44 @@
 import React from 'react'
-import {
-  BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell,
-} from 'recharts'
-import { Card, CardTitle, Grid, StatusPill } from '../components/UI'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import BatteryPackVisualization3D from '../components/3d/BatteryPackVisualization3D'
+import { Card, CardTitle, DataNumber, Grid, ProgressBar } from '../components/UI'
 import { useLiveTelemetry } from '../hooks/useLiveTelemetry'
 
-const SOH_DATA = [
-  { year: 'Y1', actual: 100, predicted: null },
-  { year: 'Y2', actual: 98,  predicted: null },
-  { year: 'Y3', actual: 96,  predicted: null },
-  { year: 'Y4', actual: 94,  predicted: null },
-  { year: 'Y5', actual: 91,  predicted: null },
-  { year: 'Y6', actual: 88,  predicted: null },
-  { year: 'Y7', actual: 85,  predicted: null },
-  { year: 'Y8', actual: 82,  predicted: 82   },
-  { year: 'Y9', actual: 78,  predicted: 78   },
-  { year: 'Y10',actual: null, predicted: 74   },
-]
-
-const CELL_V = Array.from({ length: 24 }, (_, i) => ({
-  cell: `C${i + 1}`,
-  v: parseFloat((3.78 + Math.random() * 0.12).toFixed(3)),
-}))
-
-const TT = { contentStyle: { background: '#0f1318', border: '1px solid #1e2a38', borderRadius: 6, fontFamily: 'var(--mono)', fontSize: 11 } }
+const SOH_DATA = Array.from({ length: 10 }, (_, i) => ({ year: `Y${i + 1}`, predicted: 98 - i * 2.6, confidence: 2 + Math.random() * 2 }))
+const CELL_V = Array.from({ length: 24 }, (_, i) => ({ cell: `C${i + 1}`, v: parseFloat((3.78 + Math.random() * 0.12).toFixed(3)) }))
+const TDATA = Array.from({ length: 24 }, (_, i) => ({ x: i, temp: 26 + Math.random() * 30 }))
+const TT = { contentStyle: { background: 'var(--bg-elevated)', border: '1px solid var(--accent-cyan)', color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: 10 } }
 
 export default function CyboLionPage() {
   const t = useLiveTelemetry(2000)
-
-  const soc      = Math.round(t.soc)
-  const soh      = Math.round(t.soh)
-  const rul      = 400 + Math.round(Math.random() * 30)
-  const maxTemp  = Math.round(t.cellTemp)
-  const risk     = Math.round(18 + Math.random() * 14)
-  const riskColor = risk < 25 ? 'var(--green)' : risk < 50 ? 'var(--amber)' : 'var(--red)'
-
   return (
-    <div style={{ animation: 'fadeIn .3s ease' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <div style={{
-          width: 40, height: 40, borderRadius: 8,
-          background: 'var(--green3)', border: '1px solid var(--green2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 20,
-        }}>🔋</div>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: 1, color: '#fff' }}>CyboLion</div>
-          <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)' }}>BATTERY INTELLIGENCE MODULE</div>
-        </div>
-        <div style={{ marginLeft: 'auto' }}><StatusPill type="green">MONITORING</StatusPill></div>
+    <div className='cy-grid'>
+      <BatteryPackVisualization3D />
+
+      <div className='cy-grid' style={{ gridTemplateColumns: '1fr 1fr' }}>
+        <Card>
+          <CardTitle>Real-Time Cell Grid</CardTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12,1fr)', gap: 3 }}>{Array.from({ length: 96 }, (_, i) => { const temp = 22 + Math.random() * 42; return <div key={i} style={{ height: 14, background: temp < 25 ? '#00ff9d' : temp < 40 ? '#00d4ff' : temp < 55 ? '#ffb800' : '#ff2d55' }} title={`Cell ${i + 1} · ${temp.toFixed(1)}°C`} /> })}</div>
+        </Card>
+        <Card>
+          <CardTitle>SOC / SOH Gauges</CardTitle>
+          <div><div>SOC <DataNumber value={Math.round(t.soc)} unit='%' /></div><ProgressBar value={Math.round(t.soc)} /></div>
+          <div style={{ marginTop: 8 }}><div>SOH <DataNumber value={Math.round(t.soh)} unit='%' color='var(--accent-green)' /></div><ProgressBar value={Math.round(t.soh)} /></div>
+          <CardTitle>Temperature History</CardTitle>
+          <ResponsiveContainer width='100%' height={140}><AreaChart data={TDATA}><defs><linearGradient id='tempzone' x1='0' y1='0' x2='1' y2='0'><stop offset='0%' stopColor='#00ff9d' /><stop offset='65%' stopColor='#ffb800' /><stop offset='100%' stopColor='#ff2d55' /></linearGradient></defs><CartesianGrid stroke='var(--border-dim)' strokeDasharray='3 3' /><XAxis dataKey='x' tick={{ fill: '#5a7a8a', fontSize: 9 }} /><YAxis tick={{ fill: '#5a7a8a', fontSize: 9 }} /><Tooltip {...TT} /><Area type='monotone' dataKey='temp' stroke='url(#tempzone)' fill='url(#tempzone)' fillOpacity={.16} dot={false} /></AreaChart></ResponsiveContainer>
+        </Card>
       </div>
 
-      {/* KPIs */}
-      <Grid cols={4}>
-        <Card>
-          <CardTitle>SoC</CardTitle>
-          <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--green)' }}>{soc}%</div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>State of Charge</div>
-        </Card>
-        <Card>
-          <CardTitle>SoH</CardTitle>
-          <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--amber)' }}>{soh}%</div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>State of Health</div>
-        </Card>
-        <Card>
-          <CardTitle>RUL</CardTitle>
-          <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--blue)' }}>{rul}</div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>Cycles Remaining</div>
-        </Card>
-        <Card>
-          <CardTitle>Max Cell Temp</CardTitle>
-          <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--red)' }}>{maxTemp}°C</div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>Pack Temperature</div>
-        </Card>
-      </Grid>
-
-      {/* Charts */}
       <Grid cols={2}>
         <Card>
-          <CardTitle>Cell Voltage (24 Cells)</CardTitle>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={CELL_V} margin={{ top: 4, right: 4, bottom: 4, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e2a38" />
-              <XAxis dataKey="cell" tick={{ fill: '#4a5a6a', fontSize: 8 }} interval={1} />
-              <YAxis domain={[3.7, 4.0]} tick={{ fill: '#4a5a6a', fontSize: 9 }} />
-              <Tooltip {...TT} />
-              <Bar dataKey="v" radius={[3, 3, 0, 0]}>
-                {CELL_V.map((d, i) => (
-                  <Cell key={i} fill={d.v < 3.8 ? '#ff4560' : d.v > 3.9 ? '#f0a020' : '#00e896'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <CardTitle>Battery Cell Voltage Chart</CardTitle>
+          <ResponsiveContainer width='100%' height={190}><BarChart data={CELL_V}><CartesianGrid stroke='var(--border-dim)' strokeDasharray='3 3' /><XAxis dataKey='cell' tick={{ fill: '#5a7a8a', fontSize: 8 }} /><YAxis domain={[3.7, 4]} tick={{ fill: '#5a7a8a', fontSize: 9 }} /><Tooltip {...TT} /><ReferenceLine y={3.76} stroke='var(--accent-red)' strokeDasharray='4 4' /><ReferenceLine y={3.95} stroke='var(--accent-red)' strokeDasharray='4 4' /><Bar dataKey='v'>{CELL_V.map((d, i) => <Cell key={i} fill={Math.abs(3.85 - d.v) > .07 ? '#ff2d55' : '#00d4ff'} />)}</Bar></BarChart></ResponsiveContainer>
         </Card>
-
         <Card>
-          <CardTitle>SoH Degradation Forecast (AI)</CardTitle>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={SOH_DATA} margin={{ top: 4, right: 4, bottom: 4, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e2a38" />
-              <XAxis dataKey="year" tick={{ fill: '#4a5a6a', fontSize: 10 }} />
-              <YAxis domain={[70, 102]} tick={{ fill: '#4a5a6a', fontSize: 9 }} />
-              <Tooltip {...TT} />
-              <Line type="monotone" dataKey="actual"    stroke="#00e896" strokeWidth={2} dot={{ fill: '#00e896', r: 3 }} connectNulls={false} />
-              <Line type="monotone" dataKey="predicted" stroke="#f0a020" strokeWidth={2} strokeDasharray="5 5" dot={{ fill: '#f0a020', r: 3 }} connectNulls={false} />
-            </LineChart>
-          </ResponsiveContainer>
-          <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
-            {[['#00e896','Actual SoH'],['#f0a020','AI Predicted']].map(([c, l]) => (
-              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text3)' }}>
-                <div style={{ width: 10, height: 10, borderRadius: 2, background: c }} />{l}
-              </div>
-            ))}
-          </div>
+          <CardTitle>Battery Life Prediction (AI)</CardTitle>
+          <ResponsiveContainer width='100%' height={190}><LineChart data={SOH_DATA}><CartesianGrid stroke='var(--border-dim)' strokeDasharray='3 3' /><XAxis dataKey='year' tick={{ fill: '#5a7a8a', fontSize: 9 }} /><YAxis domain={[68, 100]} tick={{ fill: '#5a7a8a', fontSize: 9 }} /><Tooltip {...TT} /><Line type='monotone' dataKey='predicted' stroke='var(--accent-cyan)' dot={false} strokeWidth={2} /></LineChart></ResponsiveContainer>
         </Card>
       </Grid>
-
-      {/* Thermal risk */}
-      <Card>
-        <CardTitle>Thermal Runaway Risk Gauge</CardTitle>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24, padding: '8px 0' }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text3)', marginBottom: 4 }}>
-              <span>RISK LEVEL</span>
-              <span style={{ color: riskColor }}>{risk}%</span>
-            </div>
-            <div style={{ height: 12, background: 'var(--bg4)', borderRadius: 6, overflow: 'hidden' }}>
-              <div style={{
-                height: '100%', width: `${risk}%`, borderRadius: 6,
-                background: 'linear-gradient(90deg, var(--green), var(--amber), var(--red))',
-                transition: 'width .5s',
-              }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text3)', marginTop: 3 }}>
-              <span>LOW</span><span>MEDIUM</span><span>HIGH</span>
-            </div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 28, fontWeight: 600, color: riskColor }}>{risk}</div>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text3)' }}>RISK SCORE</div>
-          </div>
-        </div>
-      </Card>
     </div>
   )
 }
