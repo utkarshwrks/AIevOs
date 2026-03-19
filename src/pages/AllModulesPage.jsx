@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { VEHICLES } from '../data/mockData'
-import { FleetGlobe3D } from '../components/ThreeVisuals'
+import FleetGlobe3D from '../components/3d/FleetGlobe3D'
 import { Card, ProgressBar } from '../components/UI'
 
 export default function AllModulesPage() {

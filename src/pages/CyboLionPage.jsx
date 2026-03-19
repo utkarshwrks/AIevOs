@@ -1,6 +1,6 @@
 import React from 'react'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { BatteryPackVisualization3D } from '../components/ThreeVisuals'
+import BatteryPackVisualization3D from '../components/3d/BatteryPackVisualization3D'
 import { Card, CardTitle, DataNumber, Grid, ProgressBar } from '../components/UI'
 import { useLiveTelemetry } from '../hooks/useLiveTelemetry'
 
