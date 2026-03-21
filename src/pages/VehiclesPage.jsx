@@ -1,113 +1,120 @@
 import React, { useState } from 'react'
 import { VEHICLES } from '../data/mockData'
 
-const FILTERS = ['all', 'active', 'charging', 'warning']
-
-function MiniSparkbar({ health }) {
-  const color = health > 85 ? 'var(--green)' : health > 70 ? 'var(--amber)' : 'var(--red)'
-  return (
-    <div style={{ display: 'flex', gap: 2, alignItems: 'flex-end', height: 20 }}>
-      {Array.from({ length: 8 }, (_, i) => (
-        <div key={i} style={{ width: 3, height: 8 + i * 2, borderRadius: 1, background: color }} />
-      ))}
-    </div>
-  )
-}
+const FILTERS = ['all','active','charging','warning']
 
 function StatusBadge({ status }) {
   const map = {
-    active:   { bg: 'var(--green3)',  color: 'var(--green)',  border: 'var(--green2)'  },
-    charging: { bg: 'var(--blue3)',   color: 'var(--blue)',   border: 'var(--blue2)'   },
-    warning:  { bg: 'var(--amber3)',  color: 'var(--amber)',  border: 'var(--amber2)'  },
+    active:   { color:'var(--accent-green)', bg:'rgba(0,255,157,.08)',  border:'rgba(0,255,157,.3)'  },
+    charging: { color:'var(--accent-cyan)',  bg:'rgba(0,212,255,.08)',  border:'rgba(0,212,255,.3)'  },
+    warning:  { color:'var(--accent-amber)', bg:'rgba(255,184,0,.08)',  border:'rgba(255,184,0,.3)'  },
   }
-  const t = map[status] || map.active
+  const s = map[status] || map.active
   return (
     <span style={{
-      fontFamily: 'var(--mono)', fontSize: 10, padding: '2px 8px', borderRadius: 10,
-      background: t.bg, color: t.color, border: `1px solid ${t.border}`,
+      fontFamily:'JetBrains Mono', fontSize:10, padding:'2px 8px',
+      background:s.bg, color:s.color, border:`1px solid ${s.border}`,
+      letterSpacing:'.08em',
     }}>
       {status.toUpperCase()}
     </span>
   )
 }
 
+function MiniSparkbar({ health }) {
+  const color = health>85?'var(--accent-green)':health>70?'var(--accent-amber)':'var(--accent-red)'
+  return (
+    <div style={{ display:'flex', gap:2, alignItems:'flex-end', height:22 }}>
+      {Array.from({length:8},(_,i)=>(
+        <div key={i} style={{ width:3, height:6+i*2, borderRadius:1, background:color }} />
+      ))}
+    </div>
+  )
+}
+
 export default function VehiclesPage() {
   const [filter, setFilter] = useState('all')
-
-  const filtered = filter === 'all' ? VEHICLES : VEHICLES.filter(v => v.status === filter)
+  const filtered = filter==='all' ? VEHICLES : VEHICLES.filter(v=>v.status===filter)
 
   return (
-    <div style={{ animation: 'fadeIn .3s ease' }}>
+    <div style={{ animation:'pageIn .4s ease' }}>
+
       {/* Filter bar */}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 }}>
-        <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text3)' }}>FILTER:</span>
-        {FILTERS.map(f => (
+      <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:14 }}>
+        <span style={{ fontFamily:'JetBrains Mono', fontSize:11, color:'var(--text-secondary)', letterSpacing:'.15em' }}>
+          FILTER:
+        </span>
+        {FILTERS.map(f=>(
           <button
             key={f}
-            onClick={() => setFilter(f)}
+            onClick={()=>setFilter(f)}
+            className='cy-btn'
             style={{
-              padding: '4px 12px', borderRadius: 4, cursor: 'pointer',
-              fontFamily: 'var(--mono)', fontSize: 10,
-              background: filter === f ? 'var(--green3)' : 'var(--bg3)',
-              color: filter === f ? 'var(--green)' : 'var(--text3)',
-              border: `1px solid ${filter === f ? 'var(--green2)' : 'var(--border)'}`,
-              transition: 'all .15s',
+              background: filter===f ? 'var(--accent-cyan)' : 'transparent',
+              color:      filter===f ? 'var(--bg-void)'     : 'var(--accent-cyan)',
+              padding:'4px 12px', fontSize:10,
             }}
           >
             {f.toUpperCase()}
           </button>
         ))}
+        <span style={{ marginLeft:'auto', fontFamily:'JetBrains Mono', fontSize:11, color:'var(--text-secondary)' }}>
+          {filtered.length} vehicles
+        </span>
       </div>
 
-      {/* Header row */}
+      {/* Header */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: '80px 1fr 100px 60px 80px 1fr 80px 60px',
-        gap: 12, padding: '6px 12px',
-        fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: 1,
-        color: 'var(--text3)', textTransform: 'uppercase',
-        borderBottom: '1px solid var(--border)', marginBottom: 4,
+        display:'grid',
+        gridTemplateColumns:'80px 1fr 100px 60px 80px 80px 60px 60px',
+        gap:10, padding:'6px 14px',
+        fontFamily:'JetBrains Mono', fontSize:10, letterSpacing:1,
+        color:'var(--text-secondary)', textTransform:'uppercase',
+        borderBottom:'1px solid var(--border-dim)', marginBottom:6,
       }}>
-        <span>ID</span>
-        <span>Model</span>
-        <span>Status</span>
-        <span>SoC</span>
-        <span>Health</span>
-        <span>Trend</span>
-        <span>Score</span>
-        <span>Temp</span>
+        <span>ID</span><span>Model</span><span>Status</span><span>SoC</span>
+        <span>Health</span><span>Trend</span><span>Score</span><span>Temp</span>
       </div>
 
-      {/* Vehicle rows */}
-      {filtered.map(v => {
-        const healthColor = v.health > 85 ? 'var(--green)' : v.health > 70 ? 'var(--amber)' : 'var(--red)'
+      {/* Rows */}
+      {filtered.map(v=>{
+        const hc = v.health>85?'var(--accent-green)':v.health>70?'var(--accent-amber)':'var(--accent-red)'
         return (
           <div
             key={v.id}
             style={{
-              display: 'grid',
-              gridTemplateColumns: '80px 1fr 100px 60px 80px 1fr 80px 60px',
-              gap: 12, padding: '10px 12px',
-              background: 'var(--bg3)', border: '1px solid var(--border)',
-              borderRadius: 6, marginBottom: 6, alignItems: 'center',
-              cursor: 'pointer', transition: 'all .15s',
+              display:'grid',
+              gridTemplateColumns:'80px 1fr 100px 60px 80px 80px 60px 60px',
+              gap:10, padding:'10px 14px',
+              background:'var(--bg-surface)',
+              border:'1px solid var(--border-dim)',
+              marginBottom:5, alignItems:'center',
+              cursor:'pointer', transition:'all .15s',
+              clipPath:'polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))',
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)' }}
+            onMouseEnter={e=>{
+              e.currentTarget.style.borderColor='rgba(0,212,255,.35)'
+              e.currentTarget.style.background='var(--bg-elevated)'
+            }}
+            onMouseLeave={e=>{
+              e.currentTarget.style.borderColor='var(--border-dim)'
+              e.currentTarget.style.background='var(--bg-surface)'
+            }}
           >
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--teal)' }}>{v.id}</span>
-            <span style={{ fontSize: 13, fontWeight: 500, color: '#fff' }}>{v.model}</span>
+            <span style={{ fontFamily:'JetBrains Mono', fontSize:12, color:'var(--accent-cyan)' }}>{v.id}</span>
+            <span style={{ fontSize:13, fontWeight:600 }}>{v.model}</span>
             <StatusBadge status={v.status} />
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text2)' }}>{v.soc}%</span>
-            <div style={{ height: 4, background: 'var(--bg4)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${v.health}%`, background: healthColor, borderRadius: 2 }} />
+            <span style={{ fontFamily:'JetBrains Mono', fontSize:12, color:'var(--text-secondary)' }}>{v.soc}%</span>
+            <div style={{ height:4, background:'var(--bg-elevated)', borderRadius:2, overflow:'hidden' }}>
+              <div style={{ height:'100%', width:`${v.health}%`, background:hc, borderRadius:2, transition:'width .6s' }} />
             </div>
             <MiniSparkbar health={v.health} />
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: healthColor }}>{v.health}%</span>
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text3)' }}>{v.temp}°C</span>
+            <span style={{ fontFamily:'JetBrains Mono', fontSize:12, color:hc }}>{v.health}%</span>
+            <span style={{ fontFamily:'JetBrains Mono', fontSize:11, color:'var(--text-secondary)' }}>{v.temp}°C</span>
           </div>
         )
       })}
+
     </div>
   )
 }
