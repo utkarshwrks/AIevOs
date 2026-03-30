@@ -23,26 +23,34 @@ const DOT_COLORS = {
   purple: 'var(--accent-purple)',
 }
 
-export default function Sidebar({ active, onNavigate }) {
+export default function Sidebar({ active, onNavigate, isMobile = false, mobileOpen = false, onClose }) {
   const [expanded, setExpanded] = useState(true)
+  const sidebarOpen = isMobile ? mobileOpen : true
 
   return (
     <aside style={{
-      width: expanded ? 220 : 60,
-      transition: 'width .35s cubic-bezier(.2,.9,.2,1)',
+      width: isMobile ? 220 : (expanded ? 220 : 60),
+      transition: isMobile ? 'transform .25s ease' : 'width .35s cubic-bezier(.2,.9,.2,1)',
       borderRight: '1px solid var(--border-dim)',
       background: 'linear-gradient(180deg, #030912, var(--bg-void))',
       display: 'grid',
       gridTemplateRows: '68px 1fr 50px',
       overflow: 'hidden',
       flexShrink: 0,
-      position: 'relative',
+      position: isMobile ? 'fixed' : 'relative',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
       zIndex: 100,
     }}>
 
       {/* Logo / toggle */}
       <button
-        onClick={() => setExpanded(v => !v)}
+        onClick={() => {
+          if (isMobile) onClose?.()
+          else setExpanded(v => !v)
+        }}
         style={{
           background:'transparent', border:'none',
           cursor:'pointer', textAlign:'left',
@@ -52,7 +60,7 @@ export default function Sidebar({ active, onNavigate }) {
           borderBottom:'1px solid var(--border-dim)',
         }}
       >
-        {expanded ? (
+        {(expanded || isMobile) ? (
           <div>
             <div style={{ fontFamily:'Orbitron', fontSize:18, fontWeight:900, color:'var(--accent-cyan)', textShadow:'var(--glow-cyan)', letterSpacing:'.05em' }}>
               AiEVOS
@@ -78,17 +86,17 @@ export default function Sidebar({ active, onNavigate }) {
           return (
             <button
               key={item.id}
-              title={!expanded ? item.label : undefined}
+              title={(!expanded && !isMobile) ? item.label : undefined}
               onClick={() => onNavigate(item.id)}
               style={{
                 display:'flex',
                 alignItems:'center',
-                gap: expanded ? 10 : 0,
-                justifyContent: expanded ? 'flex-start' : 'center',
+                gap: (expanded || isMobile) ? 10 : 0,
+                justifyContent: (expanded || isMobile) ? 'flex-start' : 'center',
                 border:'none',
                 cursor:'pointer',
                 textAlign:'left',
-                padding: expanded ? '9px 10px' : '10px 0',
+                padding: (expanded || isMobile) ? '9px 10px' : '10px 0',
                 color: isActive ? 'var(--accent-cyan)' : 'var(--text-secondary)',
                 background: isActive ? 'rgba(0,212,255,.07)' : 'transparent',
                 borderLeft: isActive ? `3px solid var(--accent-cyan)` : '3px solid transparent',
@@ -104,7 +112,7 @@ export default function Sidebar({ active, onNavigate }) {
             >
               {/* Status dot */}
               <span style={{
-                position:'absolute', left: expanded ? 36 : 26, top: 7,
+                position:'absolute', left: (expanded || isMobile) ? 36 : 26, top: 7,
                 width:5, height:5, borderRadius:'50%',
                 background: isActive ? dotColor : 'transparent',
                 boxShadow: isActive ? `0 0 6px ${dotColor}` : 'none',
@@ -112,7 +120,7 @@ export default function Sidebar({ active, onNavigate }) {
               }} />
 
               <Icon size={16} strokeWidth={isActive ? 2 : 1.5} />
-              {expanded && (
+              {(expanded || isMobile) && (
                 <span style={{
                   fontFamily:'Rajdhani', letterSpacing:'.1em',
                   textTransform:'uppercase', fontSize:12, fontWeight:600,
@@ -129,13 +137,13 @@ export default function Sidebar({ active, onNavigate }) {
       <div style={{
         borderTop:'1px solid var(--border-dim)',
         display:'flex', alignItems:'center',
-        gap:8, padding: expanded ? '10px 12px' : '10px 0',
-        justifyContent: expanded ? 'flex-start' : 'center',
+        gap:8, padding: (expanded || isMobile) ? '10px 12px' : '10px 0',
+        justifyContent: (expanded || isMobile) ? 'flex-start' : 'center',
         color:'var(--accent-green)',
         fontFamily:'JetBrains Mono', fontSize:10,
       }}>
         <span className='status-ring' style={{ color:'var(--accent-green)', animation:'pulse-g 2s infinite' }} />
-        {expanded && <span style={{ letterSpacing:'.12em' }}>SYSTEM ACTIVE</span>}
+        {(expanded || isMobile) && <span style={{ letterSpacing:'.12em' }}>SYSTEM ACTIVE</span>}
       </div>
     </aside>
   )

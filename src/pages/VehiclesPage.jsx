@@ -40,7 +40,7 @@ export default function VehiclesPage() {
     <div style={{ animation:'pageIn .4s ease' }}>
 
       {/* Filter bar */}
-      <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:14 }}>
+      <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:14, flexWrap:'wrap' }}>
         <span style={{ fontFamily:'JetBrains Mono', fontSize:11, color:'var(--text-secondary)', letterSpacing:'.15em' }}>
           FILTER:
         </span>
@@ -58,26 +58,28 @@ export default function VehiclesPage() {
             {f.toUpperCase()}
           </button>
         ))}
-        <span style={{ marginLeft:'auto', fontFamily:'JetBrains Mono', fontSize:11, color:'var(--text-secondary)' }}>
+        <span style={{ marginLeft:'auto', fontFamily:'JetBrains Mono', fontSize:11, color:'var(--text-secondary)', minWidth:100 }}>
           {filtered.length} vehicles
         </span>
       </div>
 
-      {/* Header */}
-      <div style={{
-        display:'grid',
-        gridTemplateColumns:'80px 1fr 100px 60px 80px 80px 60px 60px',
-        gap:10, padding:'6px 14px',
-        fontFamily:'JetBrains Mono', fontSize:10, letterSpacing:1,
-        color:'var(--text-secondary)', textTransform:'uppercase',
-        borderBottom:'1px solid var(--border-dim)', marginBottom:6,
-      }}>
-        <span>ID</span><span>Model</span><span>Status</span><span>SoC</span>
-        <span>Health</span><span>Trend</span><span>Score</span><span>Temp</span>
-      </div>
+      <div style={{ overflowX:'auto' }}>
+        <div style={{ minWidth:640 }}>
+          {/* Header */}
+          <div style={{
+            display:'grid',
+            gridTemplateColumns:'80px 1fr 100px 60px 80px 80px 60px 60px',
+            gap:10, padding:'6px 14px',
+            fontFamily:'JetBrains Mono', fontSize:10, letterSpacing:1,
+            color:'var(--text-secondary)', textTransform:'uppercase',
+            borderBottom:'1px solid var(--border-dim)', marginBottom:6,
+          }}>
+            <span>ID</span><span>Model</span><span>Status</span><span>SoC</span>
+            <span>Health</span><span>Trend</span><span>Score</span><span>Temp</span>
+          </div>
 
-      {/* Rows */}
-      {filtered.map(v=>{
+          {/* Rows */}
+          {filtered.map(v=>{
         const hc = v.health>85?'var(--accent-green)':v.health>70?'var(--accent-amber)':'var(--accent-red)'
         return (
           <div
@@ -113,7 +115,9 @@ export default function VehiclesPage() {
             <span style={{ fontFamily:'JetBrains Mono', fontSize:11, color:'var(--text-secondary)' }}>{v.temp}°C</span>
           </div>
         )
-      })}
+          })}
+        </div>
+      </div>
 
     </div>
   )
