@@ -53,6 +53,10 @@ html, body, #root {
   font-size: 14px;
 }
 
+img, svg, canvas, video { max-width: 100%; height: auto; }
+button, input, select, textarea { max-width: 100%; }
+* { min-width: 0; }
+
 /* Circuit pattern + ambient glow */
 body::before {
   content: '';
@@ -214,3 +218,18 @@ body::after {
 .dot-healthy  { animation:pulse-g 2s infinite }
 .dot-warning  { animation:pulse-a 1.4s infinite }
 .dot-critical { animation:pulse-r .9s infinite }
+
+@media (max-width: 1024px) {
+  .cy-grid[data-cols="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .cy-grid[data-cols="3"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+@media (max-width: 639px) {
+  .cy-grid[data-cols="4"],
+  .cy-grid[data-cols="3"],
+  .cy-grid[data-cols="2"] { grid-template-columns: minmax(0, 1fr) !important; }
+
+  .cy-panel { padding: 10px 12px; }
+  .cy-btn { min-height: 36px; }
+  .cy-title { letter-spacing: .12em; }
+}

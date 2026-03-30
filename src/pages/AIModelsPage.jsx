@@ -44,7 +44,7 @@ const TABS = [
 
 function AIModelHeader({ color, bg, border, title, subtitle, badge, badgeColor }) {
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:16 }}>
+    <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:16, flexWrap:'wrap' }}>
       <div style={{
         width:38, height:38,
         background:bg, border:`1px solid ${border}`,
@@ -55,14 +55,15 @@ function AIModelHeader({ color, bg, border, title, subtitle, badge, badgeColor }
         AI
       </div>
       <div>
-        <div style={{ fontSize:14, fontWeight:700, color:'var(--text-primary)' }}>{title}</div>
-        <div style={{ fontSize:11, color:'var(--text-secondary)', fontFamily:'JetBrains Mono', marginTop:2 }}>{subtitle}</div>
+        <div style={{ fontSize:14, fontWeight:700, color:'var(--text-primary)', overflowWrap:'anywhere' }}>{title}</div>
+        <div style={{ fontSize:11, color:'var(--text-secondary)', fontFamily:'JetBrains Mono', marginTop:2, overflowWrap:'anywhere' }}>{subtitle}</div>
       </div>
       {badge && (
         <div style={{
           marginLeft:'auto', fontFamily:'JetBrains Mono', fontSize:11,
           color:badgeColor, border:`1px solid ${badgeColor}`,
           padding:'2px 10px', letterSpacing:'.1em',
+          maxWidth:'100%', overflowWrap:'anywhere',
         }}>
           {badge}
         </div>

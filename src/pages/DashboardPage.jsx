@@ -3,6 +3,7 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ResponsiveContaine
 import { Card, CardTitle, DataNumber, AlertRow, ProgressBar } from '../components/UI'
 import { ALERTS, VEHICLES } from '../data/mockData'
 import { VehicleOverview3D, FleetGlobe3D, BatteryPackVisualization3D } from '../components/ThreeVisuals'
+import { useBreakpoint } from '../hooks/useBreakpoint'
 
 const TT = {
   contentStyle:{
@@ -100,13 +101,17 @@ function BatteryCellMini() {
 }
 
 export default function DashboardPage() {
+  const { isMobile, isTablet } = useBreakpoint()
+  const isNarrow = isMobile || isTablet
+
   return (
-    <div className='cy-grid' style={{ gridTemplateColumns:'repeat(12,minmax(0,1fr))', animation:'pageIn .4s ease' }}>
+    <div className='cy-grid' style={{ gridTemplateColumns:isNarrow ? 'repeat(1,minmax(0,1fr))' : 'repeat(12,minmax(0,1fr))', animation:'pageIn .4s ease' }}>
 
       {/* Stats strip */}
       <div className='cy-panel' style={{
         gridColumn:'1 / -1',
         display:'grid', gridTemplateColumns:'repeat(4,1fr)',
+        ...(isMobile ? { gridTemplateColumns:'repeat(1,minmax(0,1fr))' } : isTablet ? { gridTemplateColumns:'repeat(2,minmax(0,1fr))' } : {}),
         gap:0, padding:0, overflow:'hidden',
       }}>
         {STATS.map(({label,value,color},i)=>(
@@ -121,17 +126,17 @@ export default function DashboardPage() {
       </div>
 
       {/* Vehicle hologram */}
-      <div style={{ gridColumn:'1 / span 7' }}>
+      <div style={{ gridColumn:isNarrow ? '1 / -1' : '1 / span 7' }}>
         <VehicleOverview3D />
       </div>
 
       {/* Telemetry feed */}
-      <div style={{ gridColumn:'8 / -1' }}>
+      <div style={{ gridColumn:isNarrow ? '1 / -1' : '8 / -1' }}>
         <TelemetryFeed />
       </div>
 
       {/* Battery status */}
-      <Card style={{ gridColumn:'1 / span 4' }}>
+      <Card style={{ gridColumn:isNarrow ? '1 / -1' : '1 / span 4' }}>
         <CardTitle>Battery Status</CardTitle>
         <DataNumber value={72} unit='%' large />
         <ProgressBar value={72} />
@@ -149,7 +154,7 @@ export default function DashboardPage() {
       </Card>
 
       {/* Motor metrics */}
-      <Card style={{ gridColumn:'5 / span 4' }}>
+      <Card style={{ gridColumn:isNarrow ? '1 / -1' : '5 / span 4' }}>
         <CardTitle>Motor Metrics</CardTitle>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
           <div>
@@ -187,7 +192,7 @@ export default function DashboardPage() {
       </Card>
 
       {/* Recent alerts */}
-      <Card style={{ gridColumn:'9 / -1' }}>
+      <Card style={{ gridColumn:isNarrow ? '1 / -1' : '9 / -1' }}>
         <CardTitle>Recent Alerts</CardTitle>
         {ALERTS.slice(0,3).map(a=><AlertRow key={a.id} {...a} />)}
       </Card>
