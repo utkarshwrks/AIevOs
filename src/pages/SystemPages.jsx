@@ -41,7 +41,7 @@ export function DatabasePage() {
           TimescaleDB provides continuous aggregates and compression policies.
         </div>
       </div>
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+      <div className='cy-grid' data-cols={2} style={{ gridTemplateColumns:'1fr 1fr', gap:10 }}>
         <div>{left.map(t=><SchemaBlock key={t.name} table={t} />)}</div>
         <div>{right.map(t=><SchemaBlock key={t.name} table={t} />)}</div>
       </div>
@@ -59,9 +59,9 @@ export function APIPage() {
   return (
     <div style={{ animation:'pageIn .4s ease' }}>
       {/* Summary bar */}
-      <div className='cy-panel' style={{ marginBottom:10, display:'flex', gap:24, alignItems:'center' }}>
+      <div className='cy-panel' style={{ marginBottom:10, display:'flex', gap:24, alignItems:'center', flexWrap:'wrap' }}>
         <div className='cy-title' style={{ margin:0 }}>FastAPI Endpoints — AiEVOS Backend</div>
-        <div style={{ marginLeft:'auto', display:'flex', gap:14 }}>
+        <div style={{ marginLeft:'auto', display:'flex', gap:14, flexWrap:'wrap' }}>
           {Object.entries(methodCounts).map(([m,n])=>{
             const mc = { GET:'var(--accent-green)', POST:'var(--accent-cyan)', WS:'var(--accent-purple)', DELETE:'var(--accent-red)' }
             return (
@@ -72,7 +72,8 @@ export function APIPage() {
           })}
         </div>
       </div>
-      <Card>
+      <Card style={{ overflowX:'auto' }}>
+        <div style={{ minWidth:620 }}>
         {/* Header row */}
         <div style={{
           display:'grid', gridTemplateColumns:'52px 1fr auto',
@@ -85,6 +86,7 @@ export function APIPage() {
           <span>Method</span><span>Endpoint</span><span>Description</span>
         </div>
         {API_ENDPOINTS.map((ep,i)=><ApiEndpoint key={i} {...ep} />)}
+        </div>
       </Card>
     </div>
   )

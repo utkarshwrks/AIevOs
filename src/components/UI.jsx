@@ -125,7 +125,7 @@ export function TabBar({ tabs, active, onChange }) {
 /* ── Grid ───────────────────────────────────────────────── */
 export function Grid({ cols = 2, gap = 10, children, style = {} }) {
   return (
-    <div className='cy-grid' style={{ gridTemplateColumns:`repeat(${cols},minmax(0,1fr))`, gap, ...style }}>
+    <div className='cy-grid' data-cols={cols} style={{ gridTemplateColumns:`repeat(${cols},minmax(0,1fr))`, gap, ...style }}>
       {children}
     </div>
   )
@@ -172,6 +172,7 @@ export function SchemaBlock({ table }) {
           <span style={{
             fontFamily:'JetBrains Mono', fontSize:9, padding:'2px 8px',
             border:'1px solid var(--accent-purple)', color:'var(--accent-purple)',
+            overflowWrap:'anywhere',
           }}>{table.badge}</span>
         )}
       </div>
@@ -180,9 +181,10 @@ export function SchemaBlock({ table }) {
           display:'grid', gridTemplateColumns:'90px 1fr 36px',
           padding:'4px 0', borderBottom:'1px solid var(--border-dim)',
           fontFamily:'JetBrains Mono', fontSize:10,
+          minWidth:0,
         }}>
           <span style={{ color:'var(--accent-purple)' }}>{f.type}</span>
-          <span style={{ color:'var(--text-primary)' }}>{f.name}</span>
+          <span style={{ color:'var(--text-primary)', overflowWrap:'anywhere' }}>{f.name}</span>
           <span style={{ color:'var(--accent-amber)', fontSize:9 }}>{f.key || ''}</span>
         </div>
       ))}
@@ -230,13 +232,14 @@ export function ApiEndpoint({ method, path, desc }) {
       gap:10, borderBottom:'1px solid var(--border-dim)',
       padding:'7px 4px', fontFamily:'JetBrains Mono', fontSize:11,
       alignItems:'center', transition:'background .15s',
+      minWidth:0,
     }}
       onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,212,255,.03)'}
       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
     >
       <span style={{ color:mc[method] || 'var(--accent-cyan)', fontWeight:600, fontSize:10 }}>{method}</span>
-      <span style={{ color:'var(--text-primary)' }}>{path}</span>
-      <span style={{ color:'var(--text-secondary)', fontSize:10 }}>{desc}</span>
+      <span style={{ color:'var(--text-primary)', overflowWrap:'anywhere' }}>{path}</span>
+      <span style={{ color:'var(--text-secondary)', fontSize:10, textAlign:'right' }}>{desc}</span>
     </div>
   )
 }

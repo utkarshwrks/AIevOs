@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Card, CardTitle, Grid, LiveDot } from '../components/UI'
 import { TELEMETRY_FIELDS, generateCellTemps } from '../data/mockData'
 import { useLiveTelemetry } from '../hooks/useLiveTelemetry'
+import { useBreakpoint } from '../hooks/useBreakpoint'
 
 const TT = {
   contentStyle:{
@@ -58,6 +59,7 @@ function ThermalHeatmap() {
 }
 
 function LiveFeed({ telemetry }) {
+  const { isMobile } = useBreakpoint()
   return (
     <Card>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
@@ -70,7 +72,7 @@ function LiveFeed({ telemetry }) {
         return (
           <div key={f.key} style={{
             display:'grid', alignItems:'center',
-            gridTemplateColumns:'130px 80px 40px 1fr',
+            gridTemplateColumns:isMobile ? '1fr auto' : '130px 80px 40px 1fr',
             gap:10, padding:'7px 0',
             borderBottom:'1px solid var(--border-dim)',
             fontFamily:'JetBrains Mono', fontSize:11,
@@ -79,8 +81,8 @@ function LiveFeed({ telemetry }) {
             <span style={{ color:f.color, fontSize:13, fontWeight:600 }}>
               {f.key==='cellVolt' ? val.toFixed(3) : typeof val==='number' ? Math.round(val) : val}
             </span>
-            <span style={{ color:'var(--text-secondary)', fontSize:10 }}>{f.unit}</span>
-            <div style={{ height:3, background:'var(--bg-elevated)', borderRadius:2, overflow:'hidden' }}>
+            <span style={{ color:'var(--text-secondary)', fontSize:10, display:isMobile ? 'none' : 'block' }}>{f.unit}</span>
+            <div style={{ height:3, background:'var(--bg-elevated)', borderRadius:2, overflow:'hidden', gridColumn:isMobile ? '1 / -1' : 'auto' }}>
               <div style={{
                 height:'100%', width:`${pct}%`,
                 background:f.color, borderRadius:2,
