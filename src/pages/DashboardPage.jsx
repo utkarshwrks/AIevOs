@@ -1,219 +1,343 @@
 import React, { useState, useEffect } from 'react'
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { Card, CardTitle, DataNumber, AlertRow, ProgressBar } from '../components/UI'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from 'recharts'
+import { Card, CardTitle, DataNumber, AlertRow, ProgressBar, PageHeader, StatusPill, Grid } from '../components/UI'
 import { ALERTS, VEHICLES } from '../data/mockData'
-import { VehicleOverview3D, FleetGlobe3D, BatteryPackVisualization3D } from '../components/ThreeVisuals'
+import { VehicleOverview3D } from '../components/ThreeVisuals'
 import { useBreakpoint } from '../hooks/useBreakpoint'
+import { Sparkles, BrainCircuit, Activity, Wrench, ShieldAlert } from 'lucide-react'
 
-const TT = {
-  contentStyle:{
-    background:'var(--bg-elevated)', border:'1px solid var(--accent-cyan)',
-    color:'var(--text-primary)', fontFamily:'JetBrains Mono', fontSize:10,
-    borderRadius:0,
+const CHART_THEME = {
+  tooltip: {
+    contentStyle: {
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--bg-border)',
+      borderRadius: '6px',
+      color: 'var(--text-primary)',
+      fontFamily: 'var(--font-mono)',
+      fontSize: 10
+    }
   }
 }
 
-const MOTOR_DATA = Array.from({length:24},(_,i)=>({
-  hour:`${i}:00`,
-  temp: Math.round(55 + Math.random()*30),
-}))
-
-const STATS = [
-  { label:'Total Vehicles', value:12, color:'var(--accent-cyan)' },
-  { label:'Active Alerts',  value:3,  color:'var(--accent-amber)' },
-  { label:'Avg Battery',    value:'87%', color:'var(--accent-green)' },
-  { label:'Charging Now',   value:2,  color:'var(--accent-cyan)' },
+const FLEET_HEALTH_DATA = [
+  { day: 'Mon', availability: 98.2 },
+  { day: 'Tue', availability: 98.5 },
+  { day: 'Wed', availability: 97.9 },
+  { day: 'Thu', availability: 98.8 },
+  { day: 'Fri', availability: 99.1 },
+  { day: 'Sat', availability: 98.4 },
+  { day: 'Sun', availability: 98.6 },
 ]
 
-/* Live telemetry ticker */
-function TelemetryFeed() {
-  const [lines, setLines] = useState(
-    ALERTS.concat(ALERTS).map((a,i) => ({
-      ...a,
-      idx:i,
-      ts: new Date().toLocaleTimeString('en-US',{hour12:false}),
-    }))
-  )
+const UTILIZATION_DATA = [
+  { hour: '00:00', active: 30, charging: 40 },
+  { hour: '04:00', active: 20, charging: 50 },
+  { hour: '08:00', active: 65, charging: 20 },
+  { hour: '12:00', active: 85, charging: 10 },
+  { hour: '16:00', active: 70, charging: 15 },
+  { hour: '20:00', active: 55, charging: 30 },
+]
 
-  useEffect(()=>{
-    const id = setInterval(()=>{
-      setLines(prev => {
-        const a = ALERTS[Math.floor(Math.random()*ALERTS.length)]
-        const newLine = {
-          ...a,
-          idx: Date.now(),
-          ts: new Date().toLocaleTimeString('en-US',{hour12:false}),
-        }
-        return [newLine, ...prev.slice(0,19)]
-      })
-    }, 2200)
-    return ()=>clearInterval(id)
-  },[])
+const MAINTENANCE_FORECAST = [
+  { id: 'EV-007', days: 4,  status: 'critical' },
+  { id: 'EV-011', days: 12, status: 'warning' },
+  { id: 'EV-003', days: 18, status: 'warning' },
+]
 
-  const sevColor = s => s==='critical'?'var(--accent-red)':s==='warning'?'var(--accent-amber)':'var(--accent-cyan)'
+const VEHICLE_RANKINGS = [
+  { id: 'EV-006', score: 96, model: 'Kia EV6' },
+  { id: 'EV-001', score: 95, model: 'Tata Nexon' },
+  { id: 'EV-009', score: 94, model: 'Ather 450X' },
+  { id: 'EV-007', score: 78, model: 'Tesla Model 3' },
+]
 
-  return (
-    <Card style={{ maxHeight:310, overflow:'hidden' }}>
-      <CardTitle>Live Telemetry Feed</CardTitle>
-      <div style={{
-        maxHeight:256, overflowY:'auto',
-        display:'grid', gap:3,
-        fontFamily:'JetBrains Mono', fontSize:10,
-      }}>
-        {lines.map((a,i)=>(
-          <div key={a.idx} style={{
-            color: sevColor(a.sev),
-            borderBottom:'1px solid var(--border-dim)',
-            paddingBottom:3,
-            opacity: Math.max(0.3, 1 - i*0.04),
-            animation:'pageIn .3s ease',
-          }}>
-            [{a.ts}] [{a.module.toUpperCase()}] {a.msg}
-          </div>
-        ))}
-      </div>
-    </Card>
-  )
-}
-
-/* Battery cell mini-heatmap */
-function BatteryCellMini() {
-  return (
-    <div style={{
-      display:'grid', gridTemplateColumns:'repeat(8,1fr)',
-      gap:2, marginTop:10,
-    }}>
-      {Array.from({length:24}).map((_,i)=>{
-        const t = 20 + Math.random()*45
-        const c = t<25?'#00ff9d':t<=40?'#00d4ff':t<=55?'#ffb800':'#ff2d55'
-        return (
-          <div key={i} style={{
-            aspectRatio:1, background:c, opacity:.75,
-            transition:'transform .15s',
-          }}
-            onMouseEnter={e=>e.currentTarget.style.transform='scale(1.2)'}
-            onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}
-          />
-        )
-      })}
-    </div>
-  )
-}
-
-export default function DashboardPage() {
+export default function DashboardPage({ onNavigate }) {
   const { isMobile, isTablet } = useBreakpoint()
   const isNarrow = isMobile || isTablet
 
+  const [tickerAlerts, setTickerAlerts] = useState(
+    ALERTS.slice(0, 3).map((a, i) => ({
+      ...a,
+      idx: i,
+      ts: new Date().toLocaleTimeString('en-US', { hour12: false }),
+    }))
+  )
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setTickerAlerts(prev => {
+        const a = ALERTS[Math.floor(Math.random() * ALERTS.length)]
+        const newItem = {
+          ...a,
+          idx: Date.now(),
+          ts: new Date().toLocaleTimeString('en-US', { hour12: false }),
+        }
+        return [newItem, ...prev.slice(0, 2)]
+      })
+    }, 4000)
+    return () => clearInterval(id)
+  }, [])
+
   return (
-    <div className='cy-grid' style={{ gridTemplateColumns:isNarrow ? 'repeat(1,minmax(0,1fr))' : 'repeat(12,minmax(0,1fr))', animation:'pageIn .4s ease' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'pageIn 0.3s ease' }}>
+      
+      {/* SaaS Page Header */}
+      <PageHeader
+        title="Command Operations"
+        description="Operational overview, real-time diagnostic status, and battery/motor metrics."
+        actions={
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="cy-btn" onClick={() => onNavigate('vehicles')}>Manage Fleet</button>
+            <button className="cy-btn primary" onClick={() => onNavigate('telemetry')}>Launch Diagnostics</button>
+          </div>
+        }
+      />
 
-      {/* Stats strip */}
-      <div className='cy-panel' style={{
-        gridColumn:'1 / -1',
-        display:'grid', gridTemplateColumns:'repeat(4,1fr)',
-        ...(isMobile ? { gridTemplateColumns:'repeat(1,minmax(0,1fr))' } : isTablet ? { gridTemplateColumns:'repeat(2,minmax(0,1fr))' } : {}),
-        gap:0, padding:0, overflow:'hidden',
+      {/* Hero Header Section */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isNarrow ? '1fr' : '2fr 1fr',
+        gap: 16,
       }}>
-        {STATS.map(({label,value,color},i)=>(
-          <div key={label} style={{
-            padding:'10px 16px',
-            borderRight: i<3 ? '1px solid var(--border-dim)' : 'none',
-          }}>
-            <div className='cy-title' style={{ marginBottom:4 }}>{label}</div>
-            <div className='cy-data' style={{ fontSize:28, color }}>{value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Vehicle hologram */}
-      <div style={{ gridColumn:isNarrow ? '1 / -1' : '1 / span 7' }}>
-        <VehicleOverview3D />
-      </div>
-
-      {/* Telemetry feed */}
-      <div style={{ gridColumn:isNarrow ? '1 / -1' : '8 / -1' }}>
-        <TelemetryFeed />
-      </div>
-
-      {/* Battery status */}
-      <Card style={{ gridColumn:isNarrow ? '1 / -1' : '1 / span 4' }}>
-        <CardTitle>Battery Status</CardTitle>
-        <DataNumber value={72} unit='%' large />
-        <ProgressBar value={72} />
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginTop:10 }}>
-          <div>
-            <div style={{ color:'var(--text-secondary)', fontSize:11 }}>SOH</div>
-            <div className='cy-data' style={{ fontSize:18, color:'var(--accent-green)' }}>87%</div>
-          </div>
-          <div>
-            <div style={{ color:'var(--text-secondary)', fontSize:11 }}>Avg Temp</div>
-            <div className='cy-data' style={{ fontSize:18, color:'var(--accent-amber)' }}>44°C</div>
-          </div>
+        {/* Welcome Header */}
+        <div className="cy-panel" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: 6,
+          background: 'linear-gradient(135deg, var(--bg-surface), var(--bg-secondary))'
+        }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+            Good afternoon, Administrator.
+          </h2>
+          <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: 480 }}>
+            Fleet availability is nominal at <strong>98.4%</strong>. Active battery balancing is disengaging cell delta anomalies on EV-007, while motor heat dissipation limits are maintained.
+          </p>
         </div>
-        <BatteryCellMini />
-      </Card>
 
-      {/* Motor metrics */}
-      <Card style={{ gridColumn:isNarrow ? '1 / -1' : '5 / span 4' }}>
-        <CardTitle>Motor Metrics</CardTitle>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
-          <div>
-            <div style={{ color:'var(--text-secondary)', fontSize:11 }}>RPM</div>
-            <div className='cy-data' style={{ fontSize:22 }}>6,240</div>
+        {/* AI Executive Insight Card */}
+        <div className="cy-panel" style={{
+          border: '1px solid rgba(79, 140, 255, 0.25)',
+          background: 'rgba(79, 140, 255, 0.03)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 600, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <BrainCircuit size={13} />
+            AI Executive Insight
           </div>
-          <div>
-            <div style={{ color:'var(--text-secondary)', fontSize:11 }}>Torque</div>
-            <div className='cy-data' style={{ fontSize:22, color:'var(--accent-green)' }}>182 N·m</div>
-          </div>
-          <div>
-            <div style={{ color:'var(--text-secondary)', fontSize:11 }}>Temp</div>
-            <div className='cy-data' style={{ fontSize:22, color:'var(--accent-amber)' }}>78°C</div>
-          </div>
-          <div>
-            <div style={{ color:'var(--text-secondary)', fontSize:11 }}>Efficiency</div>
-            <div className='cy-data' style={{ fontSize:22 }}>91%</div>
-          </div>
+          <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.45, margin: 0 }}>
+            LSTM models forecast a stator bearing wear limit breach on **EV-003** in 12 days. Torque limit throttled. Coolant loop active.
+          </p>
         </div>
-        <ResponsiveContainer width='100%' height={100}>
-          <AreaChart data={MOTOR_DATA}>
-            <defs>
-              <linearGradient id='mFill' x1='0' y1='0' x2='0' y2='1'>
-                <stop offset='0%' stopColor='#00d4ff' stopOpacity='.32' />
-                <stop offset='100%' stopColor='#00d4ff' stopOpacity='0' />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke='var(--border-dim)' strokeDasharray='3 3' />
-            <XAxis dataKey='hour' tick={{fill:'#5a7a8a',fontSize:8}} interval={5} />
-            <YAxis tick={{fill:'#5a7a8a',fontSize:8}} />
-            <Tooltip {...TT} />
-            <Area type='monotone' dataKey='temp' stroke='var(--accent-cyan)' fill='url(#mFill)' strokeWidth={2} dot={false} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </Card>
+      </div>
 
-      {/* Recent alerts */}
-      <Card style={{ gridColumn:isNarrow ? '1 / -1' : '9 / -1' }}>
-        <CardTitle>Recent Alerts</CardTitle>
-        {ALERTS.slice(0,3).map(a=><AlertRow key={a.id} {...a} />)}
-      </Card>
+      {/* Key KPIs (4 grid cards) */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+        gap: 16,
+      }}>
+        <Card>
+          <CardTitle style={{ marginBottom: 4 }}>Fleet Health Index</CardTitle>
+          <DataNumber value={98.4} unit="%" color="var(--accent-success)" />
+          <div style={{ fontSize: 9.5, color: 'var(--text-muted)', marginTop: 4 }}>AVERAGE UPTIME</div>
+        </Card>
+        <Card>
+          <CardTitle style={{ marginBottom: 4 }}>Devices Online</CardTitle>
+          <DataNumber value={10} unit="/ 12 active" />
+          <div style={{ fontSize: 9.5, color: 'var(--text-muted)', marginTop: 4 }}>COMMUNICATION OK</div>
+        </Card>
+        <Card>
+          <CardTitle style={{ marginBottom: 4 }}>Charging Stations</CardTitle>
+          <DataNumber value={2} color="var(--accent-primary)" />
+          <div style={{ fontSize: 9.5, color: 'var(--text-muted)', marginTop: 4 }}>ACTIVE INGRESS SESSION</div>
+        </Card>
+        <Card>
+          <CardTitle style={{ marginBottom: 4 }}>System Warnings</CardTitle>
+          <DataNumber value={3} color="var(--accent-warning)" />
+          <div style={{ fontSize: 9.5, color: 'var(--text-muted)', marginTop: 4 }}>RESOLVED 2 INCIDENTS</div>
+        </Card>
+      </div>
 
-      {/* SoC distribution */}
-      <Card style={{ gridColumn:'1 / -1' }}>
-        <CardTitle>Battery SoC Distribution — All Vehicles</CardTitle>
-        <ResponsiveContainer width='100%' height={150}>
-          <BarChart data={VEHICLES} margin={{top:4,right:4,bottom:4,left:-20}}>
-            <CartesianGrid stroke='var(--border-dim)' strokeDasharray='3 3' />
-            <XAxis dataKey='id' tick={{fill:'#5a7a8a',fontSize:9}} />
-            <YAxis domain={[0,100]} tick={{fill:'#5a7a8a',fontSize:9}} />
-            <Tooltip {...TT} />
-            <Bar dataKey='soc' radius={[2,2,0,0]}>
-              {VEHICLES.map((v,i)=>(
-                <Cell key={i} fill={v.soc>70?'#00ff9d':v.soc>40?'#ffb800':'#ff2d55'} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </Card>
+      {/* Middle Grid - Command Analytics */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isNarrow ? '1fr' : 'repeat(12, minmax(0, 1fr))',
+        gap: 16
+      }}>
+        
+        {/* CAD Blueprint 3D (span 8) */}
+        <div style={{ gridColumn: isNarrow ? '1 / -1' : '1 / span 8', height: 290 }}>
+          <VehicleOverview3D />
+        </div>
+
+        {/* Fleet Health Analytics (span 4) */}
+        <Card style={{ gridColumn: isNarrow ? '1 / -1' : '9 / -1' }}>
+          <CardTitle>Fleet Health Analytics</CardTitle>
+          <div style={{ marginBottom: 12 }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>7-Day Average Availability: </span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--accent-success)' }}>98.4%</span>
+          </div>
+          <ResponsiveContainer width='100%' height={160}>
+            <LineChart data={FLEET_HEALTH_DATA} margin={{ top: 10, right: 10, bottom: 5, left: -20 }}>
+              <CartesianGrid stroke='var(--bg-border)' strokeDasharray='3 3' />
+              <XAxis dataKey='day' tick={{ fill: '#94A3B8', fontSize: 9 }} />
+              <YAxis domain={[95, 100]} tick={{ fill: '#94A3B8', fontSize: 9 }} />
+              <Tooltip {...CHART_THEME.tooltip} />
+              <Line type='monotone' dataKey='availability' stroke='var(--accent-success)' strokeWidth={1.5} dot={{ r: 2 }} name="Availability %" />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card>
+
+      </div>
+
+      {/* Battery, Motor and Risk forecasting Grid */}
+      <Grid cols={isNarrow ? 1 : 3}>
+        {/* Battery Intelligence overview */}
+        <Card>
+          <CardTitle>Battery Pack Analytics</CardTitle>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 9.5 }}>BMS VOLTAGE DEVIATION</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--accent-danger)', fontWeight: 600 }}>110 mV <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>C15 anomaly</span></div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, borderTop: '1px solid var(--bg-border)', paddingTop: 8 }}>
+              <div>
+                <div style={{ color: 'var(--text-muted)', fontSize: 9 }}>AVG CHARGE</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600 }}>72.4%</div>
+              </div>
+              <div>
+                <div style={{ color: 'var(--text-muted)', fontSize: 9 }}>AVG TEMP</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600 }}>44°C</div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Motor Intelligence */}
+        <Card>
+          <CardTitle>Motor Stator Metrics</CardTitle>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 9.5 }}>MAX DRIVE TORQUE</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--text-primary)', fontWeight: 600 }}>182 N·m <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>EV-003</span></div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, borderTop: '1px solid var(--bg-border)', paddingTop: 8 }}>
+              <div>
+                <div style={{ color: 'var(--text-muted)', fontSize: 9 }}>AVG RPM</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600 }}>6,240 rpm</div>
+              </div>
+              <div>
+                <div style={{ color: 'var(--text-muted)', fontSize: 9 }}>STATOR TEMP</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--accent-warning)', fontWeight: 600 }}>94°C</div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Risk forecasting */}
+        <Card>
+          <CardTitle>AI Thermal Runaway Risk</CardTitle>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ color: 'var(--text-muted)', fontSize: 9 }}>HAZARD PROBABILITY</div>
+                <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--accent-danger)', fontFamily: 'var(--font-mono)' }}>1.2%</div>
+              </div>
+              <StatusPill type="amber">ELEVATED</StatusPill>
+            </div>
+            <div style={{ borderTop: '1px solid var(--bg-border)', paddingTop: 8, fontSize: 10.5, color: 'var(--text-secondary)' }}>
+              Self-discharge indices nominal. High-temp anomaly isolated to EV-007 coolant shunt failure.
+            </div>
+          </div>
+        </Card>
+      </Grid>
+
+      {/* Bottom Grid - Operational Ingress */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isNarrow ? '1fr' : 'repeat(12, minmax(0, 1fr))',
+        gap: 16
+      }}>
+        {/* Recent Incidents (span 4) */}
+        <Card style={{ gridColumn: isNarrow ? '1 / -1' : '1 / span 4' }}>
+          <CardTitle style={{ marginBottom: 12 }}>Recent Alert Timeline</CardTitle>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {ALERTS.slice(0, 3).map(a => (
+              <AlertRow key={a.id} {...a} />
+            ))}
+          </div>
+        </Card>
+
+        {/* Maintenance schedule (span 3) */}
+        <Card style={{ gridColumn: isNarrow ? '1 / -1' : '5 / span 3' }}>
+          <CardTitle style={{ marginBottom: 12 }}>Maintenance Schedule</CardTitle>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {MAINTENANCE_FORECAST.map(item => {
+              const pillType = item.status === 'critical' ? 'red' : item.status === 'warning' ? 'amber' : 'green'
+              return (
+                <div key={item.id} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingBottom: 6,
+                  borderBottom: '1px solid var(--bg-border)'
+                }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{item.id}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{item.days}d limit</span>
+                  <StatusPill type={pillType}>{item.status.toUpperCase()}</StatusPill>
+                </div>
+              )
+            })}
+          </div>
+        </Card>
+
+        {/* Charging Network Activity (span 3) */}
+        <Card style={{ gridColumn: isNarrow ? '1 / -1' : '8 / span 3' }}>
+          <CardTitle>Charging Network Activity</CardTitle>
+          <ResponsiveContainer width='100%' height={120}>
+            <AreaChart data={UTILIZATION_DATA}>
+              <defs>
+                <linearGradient id='rewards' x1='0' y1='0' x2='0' y2='1'>
+                  <stop offset='5%' stopColor='var(--accent-primary)' stopOpacity={0.15}/>
+                  <stop offset='95%' stopColor='var(--accent-primary)' stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke='var(--bg-border)' strokeDasharray='3 3' />
+              <XAxis dataKey='hour' tick={{ fill: '#94A3B8', fontSize: 8 }} />
+              <YAxis tick={{ fill: '#94A3B8', fontSize: 8 }} />
+              <Tooltip {...CHART_THEME.tooltip} />
+              <Area type='monotone' dataKey='charging' stroke='var(--accent-primary)' fillOpacity={1} fill='url(#rewards)' name="Charging Sessions %" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </Card>
+
+        {/* Regional Operations (span 2) */}
+        <Card style={{ gridColumn: isNarrow ? '1 / -1' : '11 / -1' }}>
+          <CardTitle>Regional Operations</CardTitle>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {VEHICLE_RANKINGS.map(item => (
+              <div key={item.id} style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: 11
+              }}>
+                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>{item.id}</span>
+                <span style={{
+                  fontFamily: 'var(--font-mono)',
+                  color: item.score > 90 ? 'var(--accent-success)' : 'var(--accent-warning)',
+                  fontWeight: 600
+                }}>
+                  {item.score}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
 
     </div>
   )
